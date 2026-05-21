@@ -53,8 +53,9 @@ async function init() {
     if (window.ethereum) {
         try {
             provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' }); // Check already connected session
             
+            // Contract initialization with provider setup
             signer = provider.getSigner();
             contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
             usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
@@ -65,12 +66,40 @@ async function init() {
                 } else {
                     updateNavbar(accounts[0]);
                 }
+            } else {
+                // Public view fallback: loads market stats if wallet session is locked
+                await syncPublicPhaseDataOnly();
             }
         } catch (error) { 
             console.error("Initialization Failed on Block Channel:", error); 
         }
     } else { 
         alert("Web3 Extension missing! Please run this dApp within Trust Wallet or MetaMask application."); 
+    }
+}
+
+// --- PUBLIC PROVIDER SYNC MODULE ---
+async function syncPublicPhaseDataOnly() {
+    try {
+        const tempProv = new ethers.providers.Web3Provider(window.ethereum, "any");
+        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, tempProv);
+        const currentPhaseIdx = await tempContract.currentPhase();
+        const phaseObject = await tempContract.presalePhases(currentPhaseIdx);
+
+        const tokenPriceString = ethers.utils.formatEther(phaseObject.price);
+        const tokensSold = ethers.utils.formatEther(phaseObject.sold);
+        const capacitySupplyMax = ethers.utils.formatEther(phaseObject.maxSupply);
+        const supplyAvailableCalculated = parseFloat(capacitySupplyMax) - parseFloat(tokensSold);
+
+        updateText('total-sold-tokens', parseFloat(tokensSold).toLocaleString());
+        updateText('available-supply', parseFloat(supplyAvailableCalculated).toLocaleString());
+        
+        const priceIndicatorLabel = document.getElementById('node-rate-display');
+        if (priceIndicatorLabel) {
+            priceIndicatorLabel.innerText = `$${parseFloat(tokenPriceString).toFixed(2)} USDT`;
+        }
+    } catch (e) {
+        console.log("Public allocation ledger display synced:", e);
     }
 }
 
@@ -86,9 +115,12 @@ window.handleBuyToken = async function() {
         const priceWei = ethers.utils.parseUnits(inputAmount.toString(), 18);
         const userAddress = await signer.getAddress();
         
-        // Dynamic detection of referral address through window query strings
-        const urlParams = new URLSearchParams(window.location.search);
-        let referrerAddress = urlParams.get('ref') || "0x0000000000000000000000000000000000000000";
+        // Extraction of sponsor footprint via manual form field or dynamic fallback query parameter
+        let referrerAddress = document.getElementById('reg-referrer')?.value;
+        if(!referrerAddress || !ethers.utils.isAddress(referrerAddress)) {
+            const urlParams = new URLSearchParams(window.location.search);
+            referrerAddress = urlParams.get('ref') || "0x0000000000000000000000000000000000000000";
+        }
 
         const btn = document.getElementById('buy-now-btn');
         if(btn) { btn.disabled = true; btn.innerText = "APPROVING USDT..."; }
@@ -103,12 +135,12 @@ window.handleBuyToken = async function() {
         if(btn) btn.innerText = "SWAPPING ASSETS...";
         
         // Executes direct transaction block against buyTokens method
-        const tx = await contract.buyTokens(referrerAddress, priceWei, { gasLimit: 300000 });
+        const tx = await contract.buyTokens(referrerAddress, priceWei, { gasLimit: 400000 });
         alert("Transaction Broadcasted! Waiting for confirmation block...");
         await tx.wait();
         
         alert("Allocation successful! Node assets updated.");
-        location.reload();
+        window.location.href = "index1.html"; // Redirect user straight to analytics station upon purchase block success
         
     } catch (err) { 
         console.error("Swap Core Failure Log:", err);
@@ -151,12 +183,15 @@ window.handleSwapAndBurn = async function() {
 window.handleLogin = async function() {
     try {
         if (!window.ethereum) return alert("MetaMask or Trust Wallet required to authenticate login nodes.");
+        
+        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
         const accounts = await provider.send("eth_requestAccounts", []);
         if (accounts.length === 0) return;
         
         const userAddress = accounts[0]; 
         signer = provider.getSigner();
         contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
         localStorage.removeItem('manualLogout');
         
         // Query if user has total purchased assets inside the system
@@ -164,10 +199,10 @@ window.handleLogin = async function() {
         const hasBoughtBefore = purchaseData.totalMtaTokensBought.gt(0);
         
         if (hasBoughtBefore) {
-            window.location.href = "index1.html"; // Redirect to dashboard page
+            window.location.href = "index1.html"; // Dynamic route shift straight to operations data ledger page
         } else {
-            alert("No active account record matches this wallet hex footprint!");
-            window.location.href = "index.html"; // Loops back to Allocation Interface
+            // Direct flow bypasses error alerts - initializes terminal right away for native purchase entry
+            await setupApp(userAddress);
         }
     } catch (err) {
         console.error("Authentication Process Error:", err);
@@ -331,7 +366,14 @@ const updateText = (id, val) => { const el = document.getElementById(id); if(el)
 
 function updateNavbar(addr) {
     const btn = document.getElementById('connect-btn');
-    if(btn) btn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
+    if (btn) {
+        const span = btn.querySelector('span');
+        if (span) {
+            span.innerText = addr.substring(0, 6) + "..." + addr.substring(38);
+        } else {
+            btn.innerText = addr.substring(0, 6) + "..." + addr.substring(38);
+        }
+    }
 }
 
 window.handleLogout = function() {
