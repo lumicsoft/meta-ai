@@ -52,32 +52,41 @@ async function init() {
     checkReferralURL();
     if (window.ethereum) {
         try {
+            // Ethers v5 provider initialization
             provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' }); // Check already connected session
             
-            // Contract initialization with provider setup
-            signer = provider.getSigner();
-            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
+            // Contract initialization (Provider mode - Bina signer ke bhi read kar sakte hain)
+            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+            usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, provider);
 
+            // Check if user is already connected
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            
             if (accounts && accounts.length > 0) {
+                // Agar session active hai toh user ka address set karein
+                signer = provider.getSigner();
+                // Contract ko signer ke sath re-initialize karein taaki transactions ho sakein
+                contract = contract.connect(signer);
+                usdtContract = usdtContract.connect(signer);
+
                 if (localStorage.getItem('manualLogout') !== 'true') {
                     await setupApp(accounts[0]);
                 } else {
+                    // Manual logout ke baad bhi navbar update aur public data dikhayein
                     updateNavbar(accounts[0]);
+                    await syncPublicPhaseDataOnly();
                 }
             } else {
-                // Public view fallback: loads market stats if wallet session is locked
+                // Agar wallet connect nahi hai, toh sirf public data dikhayein
                 await syncPublicPhaseDataOnly();
             }
         } catch (error) { 
             console.error("Initialization Failed on Block Channel:", error); 
         }
     } else { 
-        alert("Web3 Extension missing! Please run this dApp within Trust Wallet or MetaMask application."); 
+        console.warn("Web3 Extension missing. Falling back to static mode.");
     }
 }
-
 // --- PUBLIC PROVIDER SYNC MODULE ---
 async function syncPublicPhaseDataOnly() {
     try {
