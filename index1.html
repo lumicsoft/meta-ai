@@ -30,8 +30,32 @@
     <div class="absolute top-[-10%] right-[-5%] w-[280px] sm:w-[600px] h-[280px] sm:h-[600px] bg-blue-600/[0.03] rounded-full blur-[120px] pointer-events-none"></div>
     <div class="absolute bottom-[15%] left-[-10%] w-[320px] sm:w-[550px] h-[320px] sm:h-[550px] bg-cyan-500/[0.03] rounded-full blur-[140px] pointer-events-none"></div>
 
-    <!-- Header Injection Element Placeholder -->
-    <div id="header-placeholder" class="w-full"></div>
+    <!-- Sticky Navigation Navbar -->
+    <header class="w-full border-b border-white/[0.04] bg-[#04070c]/80 backdrop-blur-xl fixed top-0 left-0传递 z-50 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center">
+                    <i data-lucide="cpu" class="text-white w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-lg font-extrabold tracking-tight text-white block">META <span class="text-cyan-400">AI</span></span>
+                    <span class="block text-[9px] text-slate-500 font-mono tracking-widest uppercase">Analytics Dashboard</span>
+                </div>
+            </div>
+            
+            <nav class="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <a href="index.html" class="hover:text-white transition-colors">Swap Vault</a>
+                <a href="#" class="text-cyan-400 transition-colors">Pro Dashboard</a>
+                <a href="#" class="hover:text-white transition-colors">Smart Audit</a>
+            </nav>
+
+            <div class="flex items-center gap-2">
+                <button id="connect-btn" onclick="connectWallet()" class="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-90 px-4 sm:px-5 h-10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10">
+                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i> Connect Wallet
+                </button>
+            </div>
+        </div>
+    </header>
 
     <!-- Main Grid Dashboard Framework -->
     <main class="max-w-7xl mx-auto space-y-8 mt-24">
@@ -43,7 +67,7 @@
                     <div class="w-10 h-10 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center text-cyan-400"><i data-lucide="wallet" class="w-4 h-4"></i></div>
                     <div class="min-w-0">
                         <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">Active Terminal Authentication</span>
-                        <span id="user-address" class="text-xs font-mono text-blue-400 truncate block select-all mt-0.5">0x7a2587...4b9c82</span>
+                        <span id="user-address" class="text-xs font-mono text-blue-400 truncate block select-all mt-0.5">0x0000...0000</span>
                     </div>
                 </div>
                 
@@ -51,59 +75,42 @@
                 <div class="bg-black/40 p-2.5 rounded-2xl border border-white/[0.02] flex items-center justify-between gap-3 lg:min-w-[450px] glow-input transition-all">
                     <div class="flex items-center gap-2 min-w-0 pl-2">
                         <i data-lucide="link" class="w-3.5 h-3.5 text-slate-600 flex-shrink-0"></i>
-                        <input id="refURL" type="text" readonly value="https://metaai.node/join?ref=0x7a25...4b9c" class="bg-transparent border-none outline-none w-full text-xs font-mono text-slate-400 select-all truncate">
+                        <input id="refURL" type="text" readonly value="loading referral link..." class="bg-transparent border-none outline-none w-full text-xs font-mono text-slate-400 select-all truncate">
                     </div>
                     <button onclick="copyLink()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-90 text-white font-black px-4 h-8 rounded-xl text-[10px] uppercase tracking-wider flex items-center gap-1 whitespace-nowrap shadow-md"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                 </div>
             </div>
         </section>
 
-        <!-- ================= MODULE 1: THE DYNAMIC LIVE BUY NOW VAULT (INTERNAL SWAP) ================= -->
+        <!-- ================= MODULE 1: THE DYNAMIC LIVE PHASE TOKEN WATCH ================= -->
         <section class="space-y-3">
             <h2 class="text-[11px] font-bold tracking-widest text-slate-500 uppercase flex items-center gap-2 px-1">
-                <i data-lucide="refresh-cw" class="text-cyan-400 w-3.5 h-3.5"></i> Live Token Allocation Gateway
+                <i data-lucide="refresh-cw" class="text-cyan-400 w-3.5 h-3.5"></i> Live Token Allocation Status
             </h2>
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-                
-                <!-- LEFT SIDE: SEPARATED SALES QUANTUM STATUS CARDS -->
-                <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <!-- CARD: CURRENT SALE ACTIVE PRICE -->
-                    <div class="luxury-node-card p-4 rounded-2xl relative overflow-hidden flex flex-col justify-between border-l-2 border-l-cyan-500">
-                        <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">Current Phase Rate</span>
-                        <div class="my-2">
-                            <span class="text-xl font-black orbitron text-white block">$0.20 <span class="text-xs text-slate-400 font-sans">USDT</span></span>
-                        </div>
-                        <span class="text-[9px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1"><span class="w-1 h-1 bg-cyan-400 rounded-full animate-ping"></span> Phase 1 Active</span>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <!-- CARD: CURRENT SALE ACTIVE PRICE -->
+                <div class="luxury-node-card p-4 rounded-2xl relative overflow-hidden flex flex-col justify-between border-l-2 border-l-cyan-500">
+                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Current Phase Rate</span>
+                    <div class="my-2">
+                        <span id="node-rate-display" class="text-xl font-black orbitron text-white block">0.00 USDT</span>
                     </div>
-                    <!-- CARD: TOTAL SOLD TOKENS -->
-                    <div class="luxury-node-card p-4 rounded-2xl flex flex-col justify-between">
-                        <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">Total Sold Volume</span>
-                        <div class="my-2">
-                            <span id="total-sold-tokens" class="text-xl font-black orbitron text-white block">2,450.00</span>
-                        </div>
-                        <span class="text-[9px] text-slate-400 font-mono block">MTA distributed to nodes</span>
-                    </div>
-                    <!-- CARD: AVAILABLE TOKENS HARDCAP -->
-                    <div class="luxury-node-card p-4 rounded-2xl flex flex-col justify-between">
-                        <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">Available Pool Cap</span>
-                        <div class="my-2">
-                            <span id="available-supply" class="text-xl font-black orbitron text-slate-400 block">7,550.00</span>
-                        </div>
-                        <span class="text-[9px] text-slate-500 font-mono block">Remaining Phase 1 inventory</span>
-                    </div>
+                    <span class="text-[9px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1"><span class="w-1 h-1 bg-cyan-400 rounded-full animate-ping"></span> Presale Matrix Active</span>
                 </div>
-
-                <!-- RIGHT SIDE: CORE BUY NOW SYSTEM TERMINAL -->
-                <div class="lg:col-span-5 luxury-node-card p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#0a1222] to-[#04070e] flex flex-col justify-between shadow-2xl">
-                    <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-white/[0.04] pb-2">
-                        <span>Direct Purchase Execution</span>
-                        <span class="font-mono text-cyan-400">Min entry: $100</span>
+                <!-- CARD: TOTAL SOLD TOKENS -->
+                <div class="luxury-node-card p-4 rounded-2xl flex flex-col justify-between">
+                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Total Sold Volume</span>
+                    <div class="my-2">
+                        <span id="total-sold-tokens" class="text-xl font-black orbitron text-white block">0.00</span>
                     </div>
-                    <div class="grid grid-cols-12 items-center bg-slate-950 p-2.5 rounded-xl border border-white/[0.04] my-3 gap-2">
-                        <input type="number" id="buy-usdt-amount" placeholder="Enter USDT Capital" class="col-span-8 bg-transparent border-none outline-none text-sm font-bold text-white pl-2 orbitron placeholder:text-slate-800">
-                        <span class="col-span-4 text-right text-xs font-mono font-bold text-slate-400 bg-slate-900 py-1 px-2.5 rounded-lg border border-white/[0.06]">USDT</span>
+                    <span class="text-[9px] text-slate-400 font-mono block">Cumulative MTA distributed to nodes</span>
+                </div>
+                <!-- CARD: AVAILABLE TOKENS HARDCAP -->
+                <div class="luxury-node-card p-4 rounded-2xl flex flex-col justify-between">
+                    <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Available Pool Cap</span>
+                    <div class="my-2">
+                        <span id="available-supply" class="text-xl font-black orbitron text-slate-400 block">0.00</span>
                     </div>
-                    <button onclick="handleBuyToken()" class="w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-95 text-white font-black h-11 rounded-xl text-xs uppercase tracking-widest orbitron shadow-md transition-all">Buy Now Token</button>
+                    <span class="text-[9px] text-slate-500 font-mono block">Remaining active phase inventory supply</span>
                 </div>
             </div>
         </section>
@@ -113,38 +120,67 @@
             <h2 class="text-[11px] font-bold tracking-widest text-slate-500 uppercase flex items-center gap-2 px-1">
                 <i data-lucide="clock" class="text-teal-400 w-3.5 h-3.5"></i> Vested Release Stream Splits
             </h2>
-            <div class="grid gap-4 grid-cols-1 sm:grid-cols-3">
+            <div class="grid gap-4 grid-cols-1 sm:grid-cols-4">
+                <!-- CARD: TOTAL USDT ALLOCATED -->
+                <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between">
+                    <div class="space-y-1">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Allocated Capital</span>
+                        <h4 id="allocated-capital-usdt" class="text-2xl font-black font-mono text-white">0.00</h4>
+                        <span class="text-[10px] text-slate-400 block">Net USDT deployed capital value</span>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-emerald-400"><i data-lucide="dollar-sign" class="w-4 h-4"></i></div>
+                </div>
                 
-                <!-- SEPARATE CARD: TOTAL PURCHASED MTA -->
+                <!-- CARD: TOTAL PURCHASED MTA -->
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between">
                     <div class="space-y-1">
                         <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Purchased MTA</span>
-                        <h4 id="total-purchased-mta" class="text-2xl font-black font-mono text-white">25,000.00</h4>
-                        <span class="text-[10px] text-slate-400 block">Total historical principal holdings</span>
+                        <h4 id="total-purchased-mta" class="text-2xl font-black font-mono text-white">0.00</h4>
+                        <span class="text-[10px] text-slate-400 block">Total principal structural assets</span>
                     </div>
                     <div class="w-9 h-9 rounded-xl bg-slate-950 border border-white/[0.04] flex items-center justify-center text-slate-400"><i data-lucide="database" class="w-4 h-4"></i></div>
                 </div>
 
-                <!-- SEPARATE CARD: DAILY RELEASE MTA -->
+                <!-- CARD: DAILY RELEASE MTA -->
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between border-b border-b-cyan-500/30">
                     <div class="space-y-1">
-                        <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block">Daily Release Stream</span>
-                        <h4 id="daily-release-mta" class="text-2xl font-black font-mono text-cyan-400 glow-cyan-text">250.00 MTA</h4>
-                        <span class="text-[10px] text-slate-400 block">Current fixed factor: <span class="text-slate-200 font-bold">1% / 24h</span></span>
+                        <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block">Claimable Unlocked Yield</span>
+                        <h4 id="daily-release-mta" class="text-2xl font-black font-mono text-cyan-400 glow-cyan-text">0.00 MTA</h4>
+                        <span class="text-[10px] text-slate-400 block">Current factor: <span class="text-slate-200 font-bold">1% / 24h</span></span>
                     </div>
                     <div class="w-9 h-9 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center text-cyan-400 shadow-inner"><i data-lucide="zap" class="w-4 h-4"></i></div>
                 </div>
 
-                <!-- SEPARATE CARD: TOTAL RELEASED MTA (CLAIMED HISTORY) -->
+                <!-- CARD: TOTAL RELEASED MTA -->
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between">
                     <div class="space-y-1">
-                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Released MTA</span>
-                        <h4 id="total-released-mta" class="text-2xl font-black font-mono text-slate-300">1,200.00</h4>
-                        <span class="text-[10px] text-slate-500 block">Total volume unlocked out of lockup</span>
+                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Extracted Released</span>
+                        <h4 id="total-released-mta" class="text-2xl font-black font-mono text-slate-300">0.00</h4>
+                        <span class="text-[10px] text-slate-500 block">Total volume cleared out of contract</span>
                     </div>
                     <div class="w-9 h-9 rounded-xl bg-slate-950 border border-white/[0.04] flex items-center justify-center text-slate-500"><i data-lucide="check-circle" class="w-4 h-4"></i></div>
                 </div>
+            </div>
+        </section>
 
+        <!-- ================= ACTION CONSOLE: DIRECT WITHDRAW & SWAP TERMINAL ================= -->
+        <section class="luxury-node-card rounded-3xl p-5 shadow-xl bg-gradient-to-br from-[#0c1322] to-[#04070e]">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                <div class="space-y-1">
+                    <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i> Liquidation Action Vault Console
+                    </h3>
+                    <p class="text-[10px] text-slate-500 font-mono">Available Claimable Node Pool Rewards Ledger Balance: <span id="available-balance" class="text-cyan-400 font-bold font-mono">0.00</span> MTA</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 w-full md:w-auto md:min-w-[340px]">
+                    <button onclick="handleWithdrawAvailable()" class="bg-slate-950 border border-white/[0.06] hover:border-white/20 px-5 h-12 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-200 uppercase tracking-wider shadow-inner">
+                        <i data-lucide="download-cloud" class="w-3.5 h-3.5 text-slate-400"></i> Withdraw Token
+                    </button>
+                    <button onclick="handleSwapAndBurn()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-white px-5 h-12 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 uppercase tracking-wider">
+                        <i data-lucide="zap" class="w-3.5 h-3.5"></i> Swap & Burn
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -154,12 +190,11 @@
                 <i data-lucide="users" class="text-blue-400 w-3.5 h-3.5"></i> Structural Topologies
             </h2>
             <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                
                 <!-- SEPARATE CARD: DIRECT TEAM -->
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between bg-gradient-to-r from-cyan-950/20 to-transparent border border-cyan-500/10">
                     <div class="space-y-1">
                         <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block">Direct Team Counter</span>
-                        <h4 id="direct-team-count" class="text-3xl font-black orbitron text-white">12 Users</h4>
+                        <h4 id="direct-team-count" class="text-3xl font-black orbitron text-white">0 Users</h4>
                         <span class="text-[10px] text-slate-500 block font-mono">Immediate 1st level downline connections</span>
                     </div>
                     <div class="w-11 h-11 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center text-cyan-400"><i data-lucide="user-plus" class="w-5 h-5"></i></div>
@@ -169,12 +204,11 @@
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between">
                     <div class="space-y-1">
                         <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Network Team</span>
-                        <h4 id="total-team-count" class="text-3xl font-black orbitron text-white">148 Nodes</h4>
+                        <h4 id="total-team-count" class="text-3xl font-black orbitron text-white">0 Nodes</h4>
                         <span class="text-[10px] text-slate-500 block font-mono">Cumulative multi-depth organizational footprint</span>
                     </div>
                     <div class="w-11 h-11 rounded-xl bg-slate-950 border border-white/[0.04] flex items-center justify-center text-blue-400"><i data-lucide="network" class="w-5 h-5"></i></div>
                 </div>
-
             </div>
         </section>
 
@@ -184,12 +218,11 @@
                 <i data-lucide="crown" class="text-purple-400 w-3.5 h-3.5"></i> Operational Rank Audits
             </h2>
             <div class="grid gap-4 grid-cols-1 sm:grid-cols-3">
-                
                 <!-- SEPARATE CARD: RANK STATUS -->
                 <div class="luxury-node-card p-5 rounded-2xl space-y-2 border-l-2 border-l-purple-500">
                     <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Current Rank Badge</span>
                     <div class="pt-1">
-                        <span id="rank-badge-status" class="orbitron font-black text-sm tracking-widest text-purple-400 bg-purple-500/10 px-3 py-1 rounded-xl border border-purple-500/20 uppercase">S3 Tier Active</span>
+                        <span id="rank-badge-status" class="orbitron font-black text-xs tracking-widest text-purple-400 bg-purple-500/10 px-3 py-1 rounded-xl border border-purple-500/20 uppercase">Checking...</span>
                     </div>
                 </div>
 
@@ -197,7 +230,7 @@
                 <div class="luxury-node-card p-5 rounded-2xl space-y-2">
                     <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Next Rank Milestone Target</span>
                     <div class="pt-1">
-                        <span id="rank-qualification-need" class="text-xs font-mono font-bold text-slate-300 block">Need: 2 Direct S2 Legs in parallel lines</span>
+                        <span id="rank-qualification-need" class="text-xs font-mono font-bold text-slate-400 block">Synchronizing block parameters...</span>
                     </div>
                 </div>
 
@@ -205,12 +238,11 @@
                 <div class="luxury-node-card p-5 rounded-2xl space-y-2">
                     <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Current Active Milestone Log</span>
                     <div class="pt-1">
-                        <span id="current-qualification-status" class="text-xs font-mono text-amber-400 font-bold block flex items-center gap-1.5">
-                            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Progressing: 1/2 Conditions Cleared
+                        <span id="current-qualification-status" class="text-xs font-mono text-amber-500 font-bold block flex items-center gap-1.5">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Syncing criteria...
                         </span>
                     </div>
                 </div>
-
             </div>
         </section>
 
@@ -220,12 +252,11 @@
                 <i data-lucide="coins" class="text-yellow-500 w-3.5 h-3.5"></i> Separated Financial Yield Vaults
             </h2>
             <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                
                 <!-- SEPARATE CARD: DIRECT INCOME -->
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between inner-isolated-box shadow-inner">
                     <div class="space-y-1">
                         <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Direct Referral Income</span>
-                        <h4 id="direct-income-vault" class="text-2xl font-black font-mono text-white">1,500.00 MTA</h4>
+                        <h4 id="direct-income-vault" class="text-2xl font-black font-mono text-white">0.00 MTA</h4>
                         <span class="text-[9px] font-mono font-bold bg-cyan-500/10 text-cyan-400 px-2 py-0.5 border border-cyan-500/20 rounded-md">5% Standalone Stream</span>
                     </div>
                     <div class="w-10 h-10 rounded-xl bg-slate-900 border border-white/[0.04] flex items-center justify-center text-cyan-400"><i data-lucide="arrow-up-right" class="w-5 h-5"></i></div>
@@ -235,12 +266,11 @@
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between inner-isolated-box shadow-inner">
                     <div class="space-y-1">
                         <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Rank Differential Yield</span>
-                        <h4 id="rank-income-vault" class="text-2xl font-black font-mono text-purple-400">3,240.00 MTA</h4>
+                        <h4 id="rank-income-vault" class="text-2xl font-black font-mono text-purple-400">0.00 MTA</h4>
                         <span class="text-[9px] font-mono font-bold bg-purple-500/10 text-purple-400 px-2 py-0.5 border border-purple-500/20 rounded-md">Dynamic 3% to 15% Scaling</span>
                     </div>
                     <div class="w-10 h-10 rounded-xl bg-slate-900 border border-white/[0.04] flex items-center justify-center text-purple-400"><i data-lucide="trending-up" class="w-5 h-5"></i></div>
                 </div>
-
             </div>
         </section>
 
@@ -252,7 +282,7 @@
     <script>
         function copyLink() {
             const refInput = document.getElementById('refURL');
-            if(refInput) {
+            if(refInput && refInput.value !== "loading referral link...") {
                 navigator.clipboard.writeText(refInput.value);
                 alert("Success: Referral Terminal String Copied!");
             }
