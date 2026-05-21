@@ -18,10 +18,6 @@
         .isolated-inner-well { background-color: #05080f; border: 1px solid rgba(255, 255, 255, 0.02); }
         .glow-cyan-glow { text-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
         .glow-input:focus-within { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 0 20px rgba(6, 182, 212, 0.08); }
-        
-        /* Fine Micro Scrollbar */
-        .scrollbar-fine::-webkit-scrollbar { height: 4px; }
-        .scrollbar-fine::-webkit-scrollbar-thumb { background: rgba(6, 182, 212, 0.2); border-radius: 10px; }
     </style>
 </head>
 <body class="text-slate-300 min-h-screen relative overflow-x-hidden antialiased p-3 sm:p-6 lg:p-8 selection:bg-cyan-500/20 pt-28">
@@ -29,9 +25,6 @@
     <!-- Ambient High-End Matrix Space Highlights -->
     <div class="absolute top-[-10%] right-[-5%] w-[280px] sm:w-[600px] h-[280px] sm:h-[600px] bg-blue-600/[0.03] rounded-full blur-[120px] pointer-events-none"></div>
     <div class="absolute bottom-[15%] left-[-10%] w-[320px] sm:w-[550px] h-[320px] sm:h-[550px] bg-cyan-500/[0.03] rounded-full blur-[140px] pointer-events-none"></div>
-
-    <!-- Header Dynamic Injection Markup Target Element -->
-    <div id="header-placeholder" class="w-full"></div>
 
     <!-- Main Grid Dashboard Framework -->
     <main class="max-w-7xl mx-auto space-y-8">
@@ -121,7 +114,7 @@
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between border-b border-b-cyan-500/30">
                     <div class="space-y-1">
                         <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block">Claimable Unlocked Yield</span>
-                        <h4 id="daily-release-mta" class="text-2xl font-black font-mono text-cyan-400 glow-cyan-text">0.00 MTA</h4>
+                        <h4 id="daily-release-mta" class="text-2xl font-black font-mono text-cyan-400">0.00 MTA</h4>
                         <span class="text-[10px] text-slate-400 block">Current factor: <span class="text-slate-200 font-bold">1% / 24h</span></span>
                     </div>
                     <div class="w-9 h-9 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center text-cyan-400 shadow-inner"><i data-lucide="zap" class="w-4 h-4"></i></div>
@@ -268,7 +261,13 @@
                 alert("Success: Referral Terminal String Copied!");
             }
         }
-        lucide.createIcons();
+        
+        // Force Trigger synchronization thread after layout shifts compile
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if(typeof init === 'function') init();
+            }, 600);
+        });
     </script>
 </body>
 </html>
