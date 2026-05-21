@@ -1,12 +1,11 @@
 document.addEventListener("DOMContentLoaded", async function () {
-    // 1. Path Identity
     const path = window.location.pathname;
 
-    // 2. Inject Dots Background Matrix
+    // Inject Premium Digital Cyber Glow Dots Matrix Background
     const dotsHTML = `<div class="dots-container"><div class="dots dots-white"></div><div class="dots dots-cyan"></div></div>`;
     document.body.insertAdjacentHTML('afterbegin', dotsHTML);
 
-    // 3. Check Wallet Session Status Directly From Network Provider
+    // Dynamic Check Wallet Session Status Directly From Network Provider
     let walletAddress = "";
     let isConnected = false;
     if (window.ethereum) {
@@ -17,14 +16,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // --- PREMIUM META AI (MTA) LOGO IMAGE ---
     const premiumMetaAILogo = `
         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
             <i data-lucide="cpu" class="text-white w-5 h-5 animate-pulse"></i>
         </div>
     `;
 
-    // 4. Inject Premium Global Desktop Navbar System
+    // Inject Premium Global Desktop Navbar System (Meta AI Ecosystem)
     const navHTML = `
         <header class="w-full border-b border-white/[0.04] bg-[#04070c]/80 backdrop-blur-xl fixed top-0 left-0 z-50 px-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto h-20 flex items-center justify-between">
@@ -50,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-white/[0.05] text-xs font-mono text-slate-400">
                         <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> BSC Testnet
                     </div>
-                    <button id="connect-btn" onclick="initWalletConnection()" class="new-cyber-btn flex items-center gap-2">
+                    <button id="connect-btn" onclick="typeof handleLogin === 'function' ? handleLogin() : initWalletConnection()" class="new-cyber-btn flex items-center gap-2">
                         <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
                         <span>${isConnected ? walletAddress.substring(0, 6) + "..." + walletAddress.substring(38) : "Connect Wallet"}</span>
                     </button>
@@ -71,7 +69,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (oldHeader) oldHeader.remove();
     document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-    // 5. Inject Luxury Floating Mobile Navigation Bar
+    // Inject Luxury Floating Mobile Navigation Bar
     const mobileNavHTML = `
         <div class="fixed bottom-6 left-3 right-3 md:hidden z-[9999]">
             <div class="bg-[#04070c]/95 backdrop-blur-3xl border border-white/10 rounded-[2.2rem] flex justify-around items-center px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
@@ -79,8 +77,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <i data-lucide="refresh-cw" class="w-5 h-5"></i>
                     <span class="text-[8px] font-extrabold uppercase tracking-wider">Swap Vault</span>
                 </a>
-                <div class="relative -top-5 flex flex-col items-center">
-                    <div class="relative group block" onclick="initWalletConnection()">
+                <div class="relative -top-5 flex flex-col items-center" onclick="typeof handleLogin === 'function' ? handleLogin() : initWalletConnection()">
+                    <div class="relative group block">
                         <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500 to-blue-600 blur-xl opacity-60 rounded-full"></div>
                         <div class="relative w-12 h-12 bg-gradient-to-tr from-[#0b1220] to-[#04070e] rounded-full flex items-center justify-center border-4 border-[#020407] shadow-[0_6px_20px_rgba(6,182,212,0.4)] p-1">
                             <i data-lucide="wallet" class="text-cyan-400 w-5 h-5"></i>
@@ -99,7 +97,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (oldMobileNav) oldMobileNav.remove();
     document.body.insertAdjacentHTML('beforeend', mobileNavHTML);
 
-    // 6. Inject Luxury Pre-Rendered Meta AI Footer 
+    // Inject Luxury Pre-Rendered Meta AI Footer 
     const footerHTML = `
         <footer class="py-16 text-center border-t border-white/5 relative z-10 mb-24 md:mb-0 bg-[#030508]">
             <div class="flex flex-col items-center gap-3 mb-4">
