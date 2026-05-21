@@ -24,41 +24,17 @@
         .scrollbar-fine::-webkit-scrollbar-thumb { background: rgba(6, 182, 212, 0.2); border-radius: 10px; }
     </style>
 </head>
-<body class="text-slate-300 min-h-screen relative overflow-x-hidden antialiased p-3 sm:p-6 lg:p-8 selection:bg-cyan-500/20">
+<body class="text-slate-300 min-h-screen relative overflow-x-hidden antialiased p-3 sm:p-6 lg:p-8 selection:bg-cyan-500/20 pt-28">
 
     <!-- Ambient High-End Matrix Space Highlights -->
     <div class="absolute top-[-10%] right-[-5%] w-[280px] sm:w-[600px] h-[280px] sm:h-[600px] bg-blue-600/[0.03] rounded-full blur-[120px] pointer-events-none"></div>
     <div class="absolute bottom-[15%] left-[-10%] w-[320px] sm:w-[550px] h-[320px] sm:h-[550px] bg-cyan-500/[0.03] rounded-full blur-[140px] pointer-events-none"></div>
 
-    <!-- Sticky Navigation Navbar -->
-    <header class="w-full border-b border-white/[0.04] bg-[#04070c]/80 backdrop-blur-xl fixed top-0 left-0传递 z-50 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center">
-                    <i data-lucide="cpu" class="text-white w-5 h-5"></i>
-                </div>
-                <div>
-                    <span class="text-lg font-extrabold tracking-tight text-white block">META <span class="text-cyan-400">AI</span></span>
-                    <span class="block text-[9px] text-slate-500 font-mono tracking-widest uppercase">Analytics Dashboard</span>
-                </div>
-            </div>
-            
-            <nav class="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                <a href="index.html" class="hover:text-white transition-colors">Swap Vault</a>
-                <a href="#" class="text-cyan-400 transition-colors">Pro Dashboard</a>
-                <a href="#" class="hover:text-white transition-colors">Smart Audit</a>
-            </nav>
-
-            <div class="flex items-center gap-2">
-                <button id="connect-btn" onclick="connectWallet()" class="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-90 px-4 sm:px-5 h-10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10">
-                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i> Connect Wallet
-                </button>
-            </div>
-        </div>
-    </header>
+    <!-- Header Dynamic Injection Markup Target Element -->
+    <div id="header-placeholder" class="w-full"></div>
 
     <!-- Main Grid Dashboard Framework -->
-    <main class="max-w-7xl mx-auto space-y-8 mt-24">
+    <main class="max-w-7xl mx-auto space-y-8">
         
         <!-- ================= PASSPORT SECTION: WALLET & INVITATION BIND ================= -->
         <section class="luxury-node-card rounded-3xl p-4 sm:p-5 shadow-2xl">
@@ -275,9 +251,14 @@
         </section>
 
     </main>
-<script src="components.js"></script>
+
     <!-- Target Footer element Target Module -->
     <div id="footer-placeholder" class="w-full"></div>
+
+    <!-- Mapped Dependency Web3 Loader Hooks Execution Sequence -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="components.js"></script>
+    <script src="web3-handler.js"></script>
 
     <script>
         function copyLink() {
