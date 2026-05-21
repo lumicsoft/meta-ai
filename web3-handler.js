@@ -390,4 +390,4 @@ if (window.ethereum) {
     window.ethereum.on('chainChanged', () => location.reload());
 }
 
-window.addEventListener('load', init);
+window.addEventListener('componentsLoaded', init);
