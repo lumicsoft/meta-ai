@@ -37,16 +37,17 @@
             
             <nav class="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 <a href="#" class="text-cyan-400 transition-colors">Swap Vault</a>
-                <a href="dashboard.html" class="hover:text-white transition-colors">Pro Dashboard</a>
+                <a href="index1.html" class="hover:text-white transition-colors">Pro Dashboard</a>
                 <a href="#" class="hover:text-white transition-colors">Smart Audit</a>
             </nav>
 
             <div class="flex items-center gap-2 sm:gap-3">
                 <div class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-white/[0.05] text-xs font-mono text-slate-400">
-                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> BSC Mainnet
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> BSC Testnet
                 </div>
-                <button class="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-90 px-4 sm:px-5 h-10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10">
-                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Connect</span> Wallet
+                <!-- Connected Dynamic ID Object handler -->
+                <button id="connect-btn" onclick="connectWallet()" class="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-90 px-4 sm:px-5 h-10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/10">
+                    <i data-lucide="wallet" class="w-3.5 h-3.5"></i> Connect Wallet
                 </button>
             </div>
         </div>
@@ -73,25 +74,25 @@
                 <div class="flex justify-between items-center text-xs sm:text-sm">
                     <div class="flex items-center gap-2">
                         <span class="text-slate-400">Current Phase:</span>
-                        <span class="text-white font-extrabold px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/20">Phase 1</span>
+                        <span class="text-white font-extrabold px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/20">Phase Live</span>
                     </div>
-                    <span class="text-cyan-400 font-mono font-bold">2,450 / 10,000 MTA</span>
+                    <span class="text-cyan-400 font-mono font-bold"><span id="total-sold-tokens">0.00</span> / <span id="available-supply">0.00</span> MTA</span>
                 </div>
                 <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden p-[1px] border border-white/[0.05]">
-                    <div class="cyber-gradient h-full rounded-full transition-all duration-700" style="width: 24.5%"></div>
+                    <div class="cyber-gradient h-full rounded-full transition-all duration-700" style="width: 35%"></div>
                 </div>
                 <div class="grid grid-cols-3 gap-3 pt-1 text-center">
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Node Rate</span>
-                        <span class="text-sm font-extrabold text-white mt-0.5 block">$0.20 USDT</span>
+                        <span id="node-rate-display" class="text-sm font-extrabold text-white mt-0.5 block">0.20 USDT</span>
                     </div>
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
-                        <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Next Price</span>
-                        <span class="text-sm font-extrabold text-slate-400 mt-0.5 block">$0.50 USDT</span>
+                        <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Secure State</span>
+                        <span class="text-sm font-extrabold text-emerald-400 mt-0.5 block">Verified</span>
                     </div>
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
-                        <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Expires In</span>
-                        <span class="text-sm font-extrabold text-cyan-400 mt-0.5 block font-mono">23h 59m</span>
+                        <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Gas Network</span>
+                        <span class="text-sm font-extrabold text-cyan-400 mt-0.5 block font-mono">BSC (97)</span>
                     </div>
                 </div>
             </div>
@@ -109,17 +110,18 @@
                     <h2 class="text-md font-extrabold text-white tracking-tight flex items-center gap-2">
                         <i data-lucide="refresh-cw" class="w-4 h-4 text-cyan-400"></i> Decentralized Swap Engine
                     </h2>
-                    <span class="text-[10px] font-mono uppercase bg-slate-950 border border-white/[0.05] px-2 py-0.5 rounded text-slate-400">Slippage 0%</span>
+                    <span class="text-[10px] font-mono uppercase bg-slate-950 border border-white/[0.05] px-2 py-0.5 rounded text-slate-400">Secure Direct</span>
                 </div>
 
                 <!-- Box Input Section: Pay USDT -->
                 <div class="bg-slate-950/90 p-4 rounded-2xl border border-white/[0.04] premium-input transition-all space-y-1.5">
                     <div class="flex justify-between items-center text-[11px] font-medium text-slate-500">
                         <span>YOU PAY CAPITAL</span>
-                        <span class="font-mono">Balance: 1,250.00 USDT</span>
+                        <span class="font-mono text-slate-400" id="user-address">0x00...0000</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
-                        <input type="number" placeholder="0.0" min="100" class="bg-transparent text-xl sm:text-2xl font-bold text-white focus:outline-none w-2/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="100">
+                        <!-- Hooked Input ID Element for transaction handling -->
+                        <input type="number" id="buy-usdt-amount" placeholder="0.0" min="100" class="bg-transparent text-xl sm:text-2xl font-bold text-white focus:outline-none w-2/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="100" oninput="calculateTokensReceived(this.value)">
                         <div class="flex items-center gap-2 bg-slate-900 border border-white/[0.08] px-3 py-1.5 rounded-xl font-bold text-xs text-white shadow-inner">
                             <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" class="w-3.5 h-3.5 object-contain" alt="USDT">
                             USDT
@@ -132,19 +134,20 @@
 
                 <!-- Centered Direct Switch Icon Vector Button -->
                 <div class="flex justify-center -my-3 relative z-10">
-                    <button class="w-8 h-8 rounded-xl bg-slate-900 border border-cyan-500/20 flex items-center justify-center text-cyan-400 hover:text-white transition-all shadow-lg shadow-cyan-500/5">
+                    <div class="w-8 h-8 rounded-xl bg-slate-900 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/5">
                         <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
-                    </button>
+                    </div>
                 </div>
 
                 <!-- Box Input Section: Receive MTA -->
                 <div class="bg-slate-950/90 p-4 rounded-2xl border border-white/[0.04] space-y-1.5">
                     <div class="flex justify-between items-center text-[11px] font-medium text-slate-500">
                         <span>YOU RECEIVE SNAPSHOT</span>
-                        <span class="font-mono">Est. Liquidity</span>
+                        <span class="font-mono">Est. Allocation</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
-                        <input type="number" readonly placeholder="0.0" class="bg-transparent text-xl sm:text-2xl font-bold text-slate-400 focus:outline-none w-2/3" value="500">
+                        <!-- Mapped estimated target field -->
+                        <input type="number" id="received-mta-tokens" readonly placeholder="0.0" class="bg-transparent text-xl sm:text-2xl font-bold text-slate-400 focus:outline-none w-2/3" value="500">
                         <div class="flex items-center gap-1.5 bg-gradient-to-tr from-cyan-950 to-slate-900 border border-cyan-500/20 px-3 py-1.5 rounded-xl font-bold text-xs text-cyan-400">
                             <i data-lucide="cpu" class="w-3.5 h-3.5"></i> MTA
                         </div>
@@ -155,11 +158,11 @@
                 <div class="mt-4 p-3.5 rounded-xl bg-slate-950/40 border border-white/[0.02] text-[11px] space-y-2 font-mono">
                     <div class="flex justify-between text-slate-500">
                         <span>Node Index Price</span>
-                        <span class="text-slate-300">1 MTA = 0.20 USDT</span>
+                        <span class="text-slate-300">Phase Matrix Dynamic Rate</span>
                     </div>
                     <div class="flex justify-between text-slate-500">
                         <span>Admin Gateway Protocol Fee (5%)</span>
-                        <span class="text-slate-300">5.00 USDT (Instant Direct Routing)</span>
+                        <span class="text-slate-300">Included on Contract Execution</span>
                     </div>
                     <div class="flex justify-between text-slate-500">
                         <span>Vesting Unlock Protocol</span>
@@ -171,18 +174,40 @@
                 <div class="mt-4">
                     <div class="flex items-center gap-2 px-3 bg-slate-950/60 border border-white/[0.04] rounded-xl h-10 text-xs">
                         <i data-lucide="users" class="w-3.5 h-3.5 text-slate-500"></i>
-                        <input type="text" placeholder="Sponsor Wallet String Hex (Optional)" class="bg-transparent text-slate-300 focus:outline-none w-full placeholder:text-slate-600 font-mono">
+                        <!-- Connected target field identity input mapping -->
+                        <input type="text" id="reg-referrer" placeholder="Sponsor Wallet Address (0x...)" class="bg-transparent text-slate-300 focus:outline-none w-full placeholder:text-slate-600 font-mono">
                     </div>
                 </div>
 
-                <!-- Execute Transaction Call Action Button -->
-                <button class="w-full mt-5 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-95 text-white font-bold h-13 rounded-2xl transition-all shadow-md shadow-cyan-500/10 flex items-center justify-center gap-2 tracking-wide text-xs uppercase">
+                <!-- Execute Transaction Call Action Button Hooked to window handler -->
+                <button id="buy-now-btn" onclick="handleBuyToken()" class="w-full mt-5 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-95 text-white font-bold h-13 rounded-2xl transition-all shadow-md shadow-cyan-500/10 flex items-center justify-center gap-2 tracking-wide text-xs uppercase">
                     Execute Secure Allocation Swap
                 </button>
             </div>
         </div>
     </main>
 
-    <script>lucide.createIcons();</script>
+    <!-- Script Libraries Configuration Framework Links -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="web3-handler.js"></script>
+
+    <script>
+        lucide.createIcons();
+
+        // Multiplier utility logic calculates raw values based on live rates
+        function calculateTokensReceived(usdtVal) {
+            const mtaField = document.getElementById('received-mta-tokens');
+            const currentRateText = document.getElementById('node-rate-display') ? document.getElementById('node-rate-display').innerText : "$0.20";
+            
+            // Extracts digit values from rates elements
+            const preciseRate = parseFloat(currentRateText.replace(/[^0-9.]/g, '')) || 0.20;
+            
+            if(mtaField && usdtVal > 0) {
+                mtaField.value = (parseFloat(usdtVal) / preciseRate).toFixed(2);
+            } else if(mtaField) {
+                mtaField.value = "0.00";
+            }
+        }
+    </script>
 </body>
 </html>
