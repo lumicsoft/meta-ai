@@ -1,62 +1,53 @@
-let provider, signer, contract, usdtContract;
-const CONTRACT_ADDRESS = "0x567982630826E9Fa7Cf6003036B5295d45526349"; 
-const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE"; // Testnet USDT
+// --- METAAI (MTA) NATIVE PRESALE CORE WEB3 HANDLER ---
 
+let provider, signer, contract, usdtContract;
+
+const CONTRACT_ADDRESS = "0x567982630826E9Fa7Cf6003036B5295d45526349"; // MetaAI Contract Address
+const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE";     // BEP20 USDT Token Address
+
+// Dynamic Variable Storage Matching Split Frontend Cards
 window.userData = {
-    currentLevel: 0,
-    isRegistered: false
+    isRegistered: false,
+    userWallet: ""
 };
 
+// Exact Production ABI structured directly from your Solidity Contract code
 const CONTRACT_ABI = [
-    // --- Registration Functions ---
-    "function registrationByAddress(address referrerAddress) external",
-    "function registrationExt(address referrer) external",
-
-    // --- User Status & Mapping ---
-    "function isUserExists(address user) public view returns (bool)",
-    "function addressToId(address) view returns (uint256)",
-    "function idToAddress(uint256) view returns (address)",
-
-    // --- Dashboard Data (Address Based) ---
-    "function getUserDetailsByAddress(address userAdd) public view returns (uint256 id, address referrerAddress, uint256 referrerId, uint256 partnersCount, uint8 activeSlotsCount, uint256 teamSize, uint256 registrationTimestamp, uint256 totalIncome, uint8 rank)",
-    "function getActiveLevelsCount(address userAddress) public view returns (uint8)",
-    "function getDirectPartnerAddresses(address userAddress) public view returns (address[] memory)",
-    "function isUserSlotActiveByAddress(address userAddress, uint8 slot) public view returns (bool)",
-
-    // --- Matrix & Level Data ---
-    "function levelTokenCost(uint8) view returns (uint256)",
-    "function usersXMatrix(address userAddress, uint8 level) public view returns(address currentReferrer, uint256 reinvestCount, uint256 heldTokenForUpgrade, uint256 lastSpillUnderReceiverIndex, uint256 totalTeamSize, uint256 totalEarning)",
-    "function usersXMatrixReferrals(address userAddress, uint8 level) public view returns(address[] memory referrals)",
-
-    // --- System Stats ---
-    "function totalProjectInvestment() view returns (uint256)",
-
-    // --- Events ---
-    "event Registration(uint256 indexed userId, uint256 indexed referrerId, address indexed userAddress)",
-    "event Upgrade(uint256 indexed userId, uint256 indexed newReferrerId, uint8 level)",
-    "event RankUpdated(address indexed user, uint8 newRank)",
-    "function getUserIncomeHistory(address userAddress) public view returns (tuple(uint8 level, uint256 amount, string incomeType, address fromUser, uint256 fromUserId, uint256 matrixCycle, uint256 timestamp)[])",
-    "event Spillover(uint256 indexed referrerId, uint256 indexed receiverId, uint8 level, uint256 cycle, uint8 virtualSpot)"
+    // --- Write Functions ---
+    "function buyTokens(address _referrer, uint256 _usdtAmount) external",
+    "function withdrawAvailableTokens() external",
+    "function sellAvailableTokens() external",
+    
+    // --- View Lookups ---
+    "function currentPhase() external view returns (uint256)",
+    "function checkClaimableTokens(address _user) public view returns (uint256)",
+    "function presalePhases(uint256) external view returns (uint256 price, uint256 maxSupply, uint256 sold, uint256 duration, uint256 startTime)",
+    
+    // --- Mapped Tuple Views ---
+    "function getUserPurchaseDetails(address _userAddress) external view returns (uint256 totalUsdtInvested, uint256 totalMtaTokensBought, uint256 unreleasedVestedTokens, uint256 readyToReleaseVestedTokens, uint256 totalVestedTokensReleased)",
+    "function getUserRewardDetails(address _userAddress) external view returns (uint256 totalDirectRewardsEarned, uint256 totalDifferentialRewardsEarned, uint256 pendingUnclaimedRewards, uint256 totalRewardsWithdrawnHistory)",
+    "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)"
 ];
+
 const USDT_ABI = [
     "function approve(address spender, uint256 amount) external returns (bool)",
     "function allowance(address owner, address spender) external view returns (uint256)",
     "function balanceOf(address account) external view returns (uint256)"
 ];
 
-// --- 1. NEW: AUTO-FILL LOGIC ---
+// --- REFERRAL LINK TERMINAL AUTO-FILL ---
 function checkReferralURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const refAddr = urlParams.get('ref');
-    const refField = document.getElementById('reg-referrer');
+    const refField = document.getElementById('reg-referrer'); // Element on Register Section
 
     if (refAddr && ethers.utils.isAddress(refAddr) && refField) {
         refField.value = refAddr;
-        console.log("Referral address auto-filled:", refAddr);
+        console.log("Referral string auto-loaded successfully:", refAddr);
     }
 }
 
-// --- INITIALIZATION ---
+// --- INITIALIZATION TERMINAL PROTOCOL ---
 async function init() {
     checkReferralURL();
     if (window.ethereum) {
@@ -64,10 +55,9 @@ async function init() {
             provider = new ethers.providers.Web3Provider(window.ethereum, "any");
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             
-            window.signer = provider.getSigner();
-            signer = window.signer;
-            window.contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-            contract = window.contract;
+            signer = provider.getSigner();
+            contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+            usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
 
             if (accounts && accounts.length > 0) {
                 if (localStorage.getItem('manualLogout') !== 'true') {
@@ -77,108 +67,90 @@ async function init() {
                 }
             }
         } catch (error) { 
-            console.error("Init Error", error); 
+            console.error("Initialization Failed on Block Channel:", error); 
         }
     } else { 
-        alert("Wallet not detected! Please open this site inside Trust Wallet or MetaMask browser."); 
+        alert("Web3 Extension missing! Please run this dApp within Trust Wallet or MetaMask application."); 
     }
 }
 
-
-window.handleBuyPackage = async function(pkgId) {
+// --- MODULE 1: BUY NOW TOKEN INTERFACE ---
+window.handleBuyToken = async function() {
     try {
-        const selectedPkg = packageData.find(p => p.id === pkgId);
-        if (!selectedPkg) {
-            alert("Package not found!");
+        const inputAmount = document.getElementById('buy-usdt-amount').value;
+        if (!inputAmount || parseFloat(inputAmount) < 100) {
+            alert("Security Protocol Boundary: Minimum capital threshold is $100 USDT.");
             return;
         }
 
-        const price = ethers.utils.parseUnits(selectedPkg.price.toString(), 18);
-        console.log(`Buying ${selectedPkg.name}: ${selectedPkg.price} USDT`);
+        const priceWei = ethers.utils.parseUnits(inputAmount.toString(), 18);
+        const userAddress = await signer.getAddress();
+        
+        // Dynamic detection of referral address through window query strings
+        const urlParams = new URLSearchParams(window.location.search);
+        let referrerAddress = urlParams.get('ref') || "0x0000000000000000000000000000000000000000";
 
-        const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, window.signer);
-        const userAddress = await window.signer.getAddress();
-        
-        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
-        
-        if (allowance.lt(price)) {
-            console.log("Approving exact amount:", selectedPkg.price, "USDT");
-            const btn = document.querySelector(`button[onclick*='handleBuyPackage(${pkgId})']`);
-            if(btn) btn.innerText = "APPROVING...";
-            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, price);
+        const btn = document.getElementById('buy-now-btn');
+        if(btn) { btn.disabled = true; btn.innerText = "APPROVING USDT..."; }
+
+        // ERC20 Allowance Checking Mechanism
+        const currentAllowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        if (currentAllowance.lt(priceWei)) {
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
             await approveTx.wait();
         }
         
-        const tx = await window.contract.buyPackage(pkgId);
+        if(btn) btn.innerText = "SWAPPING ASSETS...";
+        
+        // Executes direct transaction block against buyTokens method
+        const tx = await contract.buyTokens(referrerAddress, priceWei, { gasLimit: 300000 });
+        alert("Transaction Broadcasted! Waiting for confirmation block...");
         await tx.wait();
         
-        alert(`${selectedPkg.name} purchased successfully!`);
+        alert("Allocation successful! Node assets updated.");
         location.reload();
         
     } catch (err) { 
-        console.error("Purchase Error:", err);
-        if (err.code === 4001) {
-            alert("Transaction cancelled by user.");
-        } else {
-            alert("Purchase failed: " + (err.reason || err.message));
-        }
+        console.error("Swap Core Failure Log:", err);
+        alert("Transaction Aborted: " + (err.reason || err.message));
         location.reload();
     }
 }
 
-window.handleWithdraw = async function() {
+// --- MODULE 2: EXTRACT RELEASES FROM VAULT (WITHDRAW) ---
+window.handleWithdrawAvailable = async function() {
     try {
-        const tx = await contract.withdraw();
+        const tx = await contract.withdrawAvailableTokens();
+        alert("Withdraw execution sequence transmitted...");
         await tx.wait();
-        alert("Withdrawal successful!");
+        alert("Withdrawal successful! Tokens cleared into wallet ledger.");
         location.reload();
-    } catch (err) { alert("Withdraw failed: " + (err.reason || err.message)); }
+    } catch (err) { 
+        console.error("Withdraw sequence reverted:", err);
+        alert("Withdraw failed: " + (err.reason || err.message)); 
+    }
 }
 
-window.handleClaimRewards = async function() {
-    const btn = document.getElementById('claim-btn');
+// --- MODULE 3: INTERNAL CONTRACT SWAP & BURN DIRECT LIQUIDATOR ---
+window.handleSwapAndBurn = async function() {
     try {
-        if(btn) { 
-            btn.disabled = true; 
-            btn.innerText = "PROCESSING..."; 
-        }
-
-        const tx = await window.contract.claimAllIncomes();
-        console.log("Claiming rewards... TX:", tx.hash);
+        if(!confirm("Are you sure you want to trigger immediate liquidation burn?")) return;
         
+        const tx = await contract.sellAvailableTokens();
+        alert("Liquidation token burn signal broadcasted...");
         await tx.wait();
-        
-        alert("Success! Rewards added to your main balance.");
-        
-        if(typeof fetchAllData === 'function') {
-            const address = await window.signer.getAddress();
-            await fetchAllData(address); 
-        }
-
-        if(typeof window.updatePendingRewardsUI === 'function') {
-            await window.updatePendingRewardsUI();
-        } else if(btn) {
-            btn.disabled = false;
-            btn.innerText = "CLAIM ALL NOW";
-        }
-        
+        alert("Liquidation successful! Safe USDT capital routed back to wallet address.");
+        location.reload();
     } catch (err) {
-        console.error("Claim Error:", err);
-        if (!(err instanceof TypeError && err.message.includes("updatePendingRewardsUI"))) {
-            alert("Claim failed. Check console for details.");
-        }
-        if(typeof window.updatePendingRewardsUI === 'function') {
-            await window.updatePendingRewardsUI();
-        } else if(btn) {
-            btn.disabled = false;
-            btn.innerText = "CLAIM ALL NOW";
-        }
+        console.error("Internal swap call aborted:", err);
+        alert("Liquidation failed: " + (err.reason || err.message));
     }
 }
 
+// --- MODULE 4: LOGIN PROTOCOLS GATEWAY ---
 window.handleLogin = async function() {
     try {
-        if (!window.ethereum) return alert("Please install MetaMask!");
+        if (!window.ethereum) return alert("MetaMask or Trust Wallet required to authenticate login nodes.");
         const accounts = await provider.send("eth_requestAccounts", []);
         if (accounts.length === 0) return;
         
@@ -187,373 +159,188 @@ window.handleLogin = async function() {
         contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
         localStorage.removeItem('manualLogout');
         
-        // FIX: Replaced .users with .isUserExists
-        const isRegistered = await contract.isUserExists(userAddress);
-        if (isRegistered) {
-            if(typeof showLogoutIcon === "function") showLogoutIcon(userAddress);
-            window.location.href = "index1.html";
+        // Query if user has total purchased assets inside the system
+        const purchaseData = await contract.getUserPurchaseDetails(userAddress);
+        const hasBoughtBefore = purchaseData.totalMtaTokensBought.gt(0);
+        
+        if (hasBoughtBefore) {
+            window.location.href = "index1.html"; // Redirect to dashboard page
         } else {
-            alert("This wallet is not registered!");
-            window.location.href = "register.html";
+            alert("No active account record matches this wallet hex footprint!");
+            window.location.href = "index.html"; // Loops back to Allocation Interface
         }
     } catch (err) {
-        console.error("Login Error:", err);
-        alert("Login failed! Make sure you are on BSC Testnet.");
+        console.error("Authentication Process Error:", err);
     }
 }
 
-window.handleRegister = async function() {
-    try {
-        if (!window.ethereum) {
-            alert("MetaMask or Trust Wallet not found!");
-            return;
-        }
-
-        const tempProvider = new ethers.providers.Web3Provider(window.ethereum);
-        await tempProvider.send("eth_requestAccounts", []);
-        signer = tempProvider.getSigner();
-        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-        const usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
-        
-        const userAddress = await signer.getAddress();
-        const refField = document.getElementById('reg-referrer');
-        const referrerAddress = refField ? refField.value.trim() : "";
-        
-        const regAmount = ethers.utils.parseUnits("10", 18);
-
-        if (!ethers.utils.isAddress(referrerAddress)) {
-            alert("Please enter a valid Referrer Wallet Address (0x...)");
-            return;
-        }
-
-        const btn = document.getElementById('reg-btn');
-        if(btn) {
-            btn.disabled = true;
-            btn.innerText = "PROCESSING...";
-        }
-
-        const allowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
-        if (allowance.lt(regAmount)) {
-            if(btn) btn.innerText = "APPROVE 10 USDT...";
-            const estApproveGas = await usdtContract.estimateGas.approve(CONTRACT_ADDRESS, regAmount);
-            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, regAmount, {
-                gasLimit: estApproveGas.mul(130).div(100) 
-            });
-            await approveTx.wait();
-        }
-
-        if(btn) btn.innerText = "ESTIMATING GAS...";
-
-        try {
-            // FIX: Using registrationByAddress as per new contract
-            const tx = await contract.registrationByAddress(referrerAddress);
-            alert("Transaction sent! Waiting for confirmation...");
-            const receipt = await tx.wait();
-
-            if (receipt.status === 1) {
-                alert("Registration Successful!");
-                window.location.href = "index1.html";
-            }
-        } catch (gasErr) {
-            console.error("Gas Estimation Failed:", gasErr);
-            throw new Error("Transaction would fail. Check if you have enough BNB for gas.");
-        }
-
-    } catch (err) {
-        console.error("Detailed Error:", err);
-        const btn = document.getElementById('reg-btn');
-        if(btn) {
-            btn.disabled = false;
-            btn.innerText = "REGISTER NOW";
-        }
-        alert("Error: " + (err.reason || err.message));
-    }
-}
-
-window.handleLogout = function() {
-    if (confirm("Do you want to disconnect?")) {
-        localStorage.setItem('manualLogout', 'true');
-        signer = null;
-        contract = null;
-        window.location.href = "index.html";
-    }
-}
-
-function showLogoutIcon(address) {
-    const btn = document.getElementById('connect-btn');
-    const logout = document.getElementById('logout-icon-btn');
-    if (btn) btn.innerText = address.substring(0, 6) + "..." + address.substring(38);
-    if (logout) { logout.style.display = 'flex'; }
-}
-
-// --- APP SETUP ---
+// --- SYSTEM APP COMPLIANCE FRAMEWORK SETUP ---
 async function setupApp(address) {
     try {
+        window.userData.userWallet = address;
+        const path = window.location.pathname;
+
+        // --- 🔒 STRICT NETWORK VERIFICATION SHIELD (BSC TESTNET ONLY) ---
         const network = await provider.getNetwork();
         if (network.chainId !== 97) { 
             try {
+                // Automatic switch network request call
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x61' }],
+                    params: [{ chainId: '0x61' }], // Hex decimal code for BSC Testnet Chain 97
                 });
-            } catch (err) {
-                alert("Please switch to BSC testnet!");
-                return; 
-            }
-        }
-        
-        // FIX: Replaced .users with .isUserExists
-        const isRegistered = await contract.isUserExists(address);
-        const path = window.location.pathname;
-
-        window.userData.isRegistered = isRegistered;
-
-        if (!isRegistered) {
-            if (!path.includes('register') && !path.includes('login')) {
-                window.location.href = "register.html"; 
-                return; 
-            }
-        } else {
-            if (path.includes('register') || path.includes('login') || path.endsWith('index.html')) {
-                window.location.href = "index1.html";
+                
+                alert("Network switched successfully! Syncing nodes...");
+                location.reload();
                 return;
+            } catch (err) {
+                console.error("Network switch rejection or error:", err);
+                alert("Network Conflict: Processing requires switching to the BSC Testnet. Please change network inside your wallet app.");
+                return; // Execution stops immediately if network shift is declined
             }
         }
 
         updateNavbar(address);
-        showLogoutIcon(address); 
+        renderWalletCredentialsString(address);
 
-        if (path.includes('index1')) {
-            await fetchAllData(address);
-        }
-
-        if (path.includes('referral') || path.includes('deposits')) {
-            if (typeof initReferralPage === "function") {
-                await initReferralPage();
-            } else if (typeof initTeamPage === "function") {
-                await initTeamPage();
-            }
-        }
-        
-        if (path.includes('deposits')) {
-            if (typeof initTeamPage === "function") {
-                await initTeamPage();
-            } else {
-                await fetchAllData(address); 
-                if(window.loadTree) window.loadTree(address);
-            }
-        }
-
-        if (path.includes('history')) {
-            window.showHistory('deposit');
+        // Auto routing calculations sync conditionally based on layout destinations
+        if (path.includes('index1') || path.endsWith('index1.html')) {
+            await fetchAllSplitDataMetrics(address);
+        } else {
+            // Load live market phase pricing data on initialization interface
+            await syncCurrentPhaseData();
         }
 
     } catch (e) {
-        console.error("SetupApp Error:", e);
+        console.error("Setup compliance routing error trace:", e);
     }
 }
-// --- HISTORY LOGIC ---
-window.showHistory = async function(type) {
-    const container = document.getElementById('history-container');
-    if(!container) return;
-    container.innerHTML = `<div class="p-10 text-center text-yellow-500 italic">Blockchain Syncing...</div>`;
+
+// --- RENDER CURRENT PHASE DYNAMIC DATA FIELDS ---
+async function syncCurrentPhaseData() {
+    try {
+        const currentPhaseIdx = await contract.currentPhase();
+        const phaseObject = await contract.presalePhases(currentPhaseIdx);
+
+        const tokenPriceString = ethers.utils.formatEther(phaseObject.price);
+        const tokensSold = ethers.utils.formatEther(phaseObject.sold);
+        const capacitySupplyMax = ethers.utils.formatEther(phaseObject.maxSupply);
+        const supplyAvailableCalculated = parseFloat(capacitySupplyMax) - parseFloat(tokensSold);
+
+        // Inject variables into matching standalone fields on layout panels
+        updateText('total-sold-tokens', parseFloat(tokensSold).toLocaleString());
+        updateText('available-supply', parseFloat(supplyAvailableCalculated).toLocaleString());
+        
+        const priceIndicatorLabel = document.getElementById('node-rate-display');
+        if (priceIndicatorLabel) {
+            priceIndicatorLabel.innerText = `$${parseFloat(tokenPriceString).toFixed(2)} USDT`;
+        }
+    } catch (err) {
+        console.error("Presale global ledger fetch metrics trace error:", err);
+    }
+}
+
+// --- MODULE 5: BATCH DATA QUERY ENGINE FOR SEPARATED CARDS ---
+async function fetchAllSplitDataMetrics(address) {
+    try {
+        console.log("Synchronizing 1:1 separate cards parameters stack for hex identity:", address);
+        
+        // 1. Core pricing phase counters execution updates
+        await syncCurrentPhaseData();
+
+        // 2. Fetch data array from getUserPurchaseDetails (Vesting Blocks Mapping)
+        const purchasesTuple = await contract.getUserPurchaseDetails(address);
+        updateText('allocated-capital-usdt', parseFloat(ethers.utils.formatEther(purchasesTuple.totalUsdtInvested)).toFixed(2));
+        updateText('total-purchased-mta', parseFloat(ethers.utils.formatEther(purchasesTuple.totalMtaTokensBought)).toFixed(2));
+        updateText('total-released-mta', parseFloat(ethers.utils.formatEther(purchasesTuple.totalVestedTokensReleased)).toFixed(2));
+
+        // 3. Fetch data calculation from checkClaimableTokens view (Daily Release Block Mapping)
+        const liveDailyReleaseClaimable = await contract.checkClaimableTokens(address);
+        updateText('daily-release-mta', parseFloat(ethers.utils.formatEther(liveDailyReleaseClaimable)).toFixed(2));
+
+        // 4. Fetch data array from getUserRewardDetails (Monetary Yield Block Mapping)
+        const rewardsTuple = await contract.getUserRewardDetails(address);
+        updateText('direct-income-vault', parseFloat(ethers.utils.formatEther(rewardsTuple.totalDirectRewardsEarned)).toFixed(2));
+        updateText('rank-income-vault', parseFloat(ethers.utils.formatEther(rewardsTuple.totalDifferentialRewardsEarned)).toFixed(2));
+        updateText('available-balance', parseFloat(ethers.utils.formatEther(rewardsTuple.pendingUnclaimedRewards)).toFixed(2));
+
+        // 5. Fetch data array from getUserNetworkStats (Structural Topology Block Mapping)
+        const networkTuple = await contract.getUserNetworkStats(address);
+        updateText('direct-team-count', `${networkTuple.immediateDirectCount.toString()} Users`);
+        
+        // Mathematical multi-leg aggregation calculation loop to compute true overall network totals
+        const entireTotalOrganizationFootprint = 
+            parseInt(networkTuple.immediateDirectCount) +
+            parseInt(networkTuple.downlineS1Count) +
+            parseInt(networkTuple.downlineS2Count) +
+            parseInt(networkTuple.downlineS3Count) +
+            parseInt(networkTuple.downlineS4Count);
+        updateText('total-team-count', `${entireTotalOrganizationFootprint.toString()} Nodes`);
+
+        // Rank validation mapping structures code parameters checks
+        const activeRankCode = networkTuple.currentRankCode.toNumber();
+        updateRankMilestoneTopologyDOM(activeRankCode, networkTuple);
+
+    } catch (error) {
+        console.error("Dashboard batch synchronization trace terminated:", error);
+    }
+}
+
+// --- DYNAMIC STANDALONE RANK MILESTONE CALCULATOR DOM ENGINE ---
+function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
+    const statusLabel = document.getElementById('rank-badge-status');
+    const needLabel = document.getElementById('rank-qualification-need');
+    const progressLabel = document.getElementById('current-qualification-status');
+
+    if (statusLabel) {
+        statusLabel.innerText = rankIndex > 0 ? `S${rankIndex} Tier Active` : "No Active Rank Base";
+    }
+
+    if (needLabel && progressLabel) {
+        if (rankIndex === 0) {
+            needLabel.innerText = "Target Milestone S1: Requires 3 Direct referrals to bind structural nodes";
+            progressLabel.innerText = `Progress Vector: ${networkTuple.immediateDirectCount.toString()} / 3 Referrals Registered`;
+        } else if (rankIndex === 1) {
+            needLabel.innerText = "Target Milestone S2: Requires 2 parallel lines to qualify S1 tier rank nodes";
+            progressLabel.innerText = `Progress Vector: ${networkTuple.downlineS1Count.toString()} / 2 Downline S1 Legs Active`;
+        } else if (rankIndex === 2) {
+            needLabel.innerText = "Target Milestone S3: Requires 2 parallel lines to qualify S2 tier rank nodes";
+            progressLabel.innerText = `Progress Vector: ${networkTuple.downlineS2Count.toString()} / 2 Downline S2 Legs Active`;
+        } else if (rankIndex === 3) {
+            needLabel.innerText = "Target Milestone S4: Requires 2 parallel lines to qualify S3 tier rank nodes";
+            progressLabel.innerText = `Progress Vector: ${networkTuple.downlineS3Count.toString()} / 2 Downline S3 Legs Active`;
+        } else if (rankIndex >= 4) {
+            needLabel.innerText = "Target Milestone S5: Maximum System Milestone Node Achievement reached";
+            progressLabel.innerText = "Progress Vector: Elite Master Node Status Secured";
+        }
+    }
+}
+
+// --- GLOBAL ATOMIC DOM UTILITIES ---
+function renderWalletCredentialsString(walletAddress) {
+    const addressBox = document.getElementById("user-address");
+    if (addressBox) addressBox.innerText = `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`;
     
-    const logs = await window.fetchBlockchainHistory(type);
-    if (logs.length === 0) {
-        container.innerHTML = `<div class="p-10 text-center text-gray-500">No transactions found.</div>`;
-        return;
-    }
-
-    container.innerHTML = logs.map(item => `
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 flex justify-between items-center">
-            <div>
-                <h4 class="font-bold ${item.color}">${item.type}</h4>
-                <p class="text-xs text-gray-400">${item.date} | ${item.time}</p>
-            </div>
-            <div class="text-right">
-                <span class="text-lg font-black text-white">${item.amount}</span>
-                <p class="text-[10px] text-gray-500 italic uppercase">Completed</p>
-            </div>
-        </div>
-    `).join('');
-}
-
-
-window.getIncomeHistory = async (userAddress) => {
-    try {
-        const activeContract = window.contract || contract;
-        if (!activeContract) return [];
-
-        const historyData = await activeContract.getUserIncomeHistory(userAddress);
-        if (!historyData || historyData.length === 0) return [];
-
-        const formattedHistory = historyData.map((record, index) => {
-            try {
-                const amountRaw = record.amount || record[0];
-                const typeRaw = record.incomeType || record[1];
-                const timeRaw = record.time || record[2];
-                const fromRaw = record.from || record[3];
-                const pkgRaw = record.packageId || record[4];
-
-                return {
-                    amount: ethers.utils.formatEther(amountRaw.toString()),
-                    incomeType: Number(typeRaw.toString()),
-                    time: Number(timeRaw.toString()),
-                    from: fromRaw,
-                    packageId: Number(pkgRaw.toString()),
-                    index: index + 1
-                };
-            } catch (innerErr) { return null; }
-        }).filter(item => item !== null);
-
-        return formattedHistory.sort((a, b) => b.time - a.time);
-    } catch (e) { return []; }
-}
-
-window.fetchBlockchainHistory = async function(type) {
-    try {
-        const activeSigner = window.signer || signer;
-        const activeContract = window.contract || contract;
-        const address = await activeSigner.getAddress();
-        const rawHistory = await activeContract.getUserHistory(address);
-        
-        return rawHistory.map(item => {
-            const dt = new Date(item.timestamp.toNumber() * 1000);
-            return {
-                type: item.txType,
-                amount: format(item.amount),
-                date: dt.toLocaleDateString(),
-                time: dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                ts: item.timestamp.toNumber(),
-                color: 'text-cyan-400'
-            };
-        }).sort((a, b) => b.ts - a.ts);
-    } catch (e) { return []; }
-}
-
-async function fetchAllData(address) {
-    try {
-        console.log("Fetching data for:", address);
-        
-        // --- 1. DIRECT ADDRESS SE DETAILS NIKALNA ---
-        // Final ABI ke mutabik function ka naam 'getUserDetailsByAddress' hai
-        const details = await window.contract.getUserDetailsByAddress(address);
-        
-        // --- 2. DASHBOARD SYNC ---
-        
-        // Header & Profile Setup
-        // Naye ABI mein 'id' pehla return parameter hai
-        updateText('user-id-display', details.id ? "#" + details.id.toString() : "#0000");
-        updateText('connect-btn', address.substring(0,6) + "..." + address.substring(38));
-        
-        // Rank Setup
-        const rankLabel = "Rank: " + details.rank.toString();
-        updateText('rank-display', rankLabel);
-        updateText('current-rank-header', rankLabel);
-
-        // Referral Link (Address based link as requested)
-        const currentPath = window.location.pathname;
-        const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-        const refUrl = window.location.origin + basePath + "register.html?ref=" + address;
-        
-        const refInput = document.getElementById('refURL');
-        if(refInput) {
-            refInput.value = refUrl;
-        }
-
-        // Income & Earnings Setup
-        const income = format(details.totalIncome);
-        updateText('total-income', income);
-        updateText('total-income-display', income); // Agar element exists karta hai
-        updateText('balance-large', income);
-        updateText('all-income', income);
-        
-        // Matrix, Level aur Direct Income (Contract abhi total income hi de raha hai)
-        updateText('matrix-earningss', income + " USDT"); 
-        updateText('level-earnings', "0.00 USDT");
-        updateText('direct-earnings', "0.00 USDT");
-
-        // Team & Network Stats
-        updateText('partners-count', details.partnersCount.toString());
-        updateText('direct-count', details.partnersCount.toString());
-        updateText('team-size', details.teamSize.toString());
-        updateText('all-team', details.teamSize.toString());
-        
-        // Active Slots count (Level 1 to 12)
-        updateText('active-slots-count', details.activeSlotsCount.toString() + "/12");
-        
-        // Referrer details
-        updateText('referrer-id-display', "Ref ID: " + details.referrerId.toString());
-
-    } catch (e) {
-        console.error("Fetch Data Error (Final Sync):", e);
-        // Agar dashboard load nahi hota toh console check karein ki function name match kar raha hai ya nahi
+    const referralInputLinkElement = document.getElementById("refURL");
+    if (referralInputLinkElement) {
+        referralInputLinkElement.value = `${window.location.origin}/index.html?ref=${walletAddress}`;
     }
 }
-
-window.loadMatrixData = async function(level) {
-    try {
-        const userAddress = await signer.getAddress();
-        const data = await contract.usersXMatrix(userAddress, level);
-        return {
-            referrer: data.currentReferrer,
-            reinvests: data.reinvestCount.toString(),
-            heldForUpgrade: format(data.heldTokenForUpgrade),
-            earnings: format(data.totalEarning),
-            team: data.totalTeamSize.toString()
-        };
-    } catch (e) { return null; }
-}
-
-window.getAllMatrixHistory = async function(userAddr, pkgId) {
-    try {
-        const activeContract = window.contract; 
-        const history = await activeContract.getAllMatrixHistory(userAddr, pkgId);
-        return history.map(node => ({
-            index: node.index.toString(),
-            filledCount: node.filledCount.toString(),
-            slotA: node.slotA,
-            slotB: node.slotB,
-            slotC: node.slotC
-        }));
-    } catch (e) { return []; }
-}
-
-window.syncPendingRewards = async function() {
-    try {
-        const activeContract = window.contract || contract;
-        const address = await signer.getAddress();
-        const pending = await activeContract.getPendingIncomeDetails(address);
-        
-        const pDaily = parseFloat(ethers.utils.formatEther(pending[0]));
-        const pLunar = parseFloat(ethers.utils.formatEther(pending[1]));
-        const pBoxer = parseFloat(ethers.utils.formatEther(pending[2]));
-        const pFastTrack = pending[3] ? parseFloat(ethers.utils.formatEther(pending[3])) : 0;
-        
-        const totalPending = pDaily + pLunar + pBoxer + pFastTrack;
-        updateText('total-pending-claim', totalPending.toFixed(2));
-        updateText('p-daily', pDaily.toFixed(2));
-        updateText('p-lunar', pLunar.toFixed(2));
-        updateText('p-booster', pBoxer.toFixed(2));
-        updateText('p-fast-track', pFastTrack.toFixed(2));
-
-        const claimBtn = document.getElementById('claim-btn');
-        if (claimBtn) claimBtn.disabled = totalPending <= 0;
-    } catch (e) {}
-}
-
-const format = (val) => {
-    try { 
-        if (!val) return "0.00"; 
-        return parseFloat(ethers.utils.formatUnits(val, 18)).toFixed(2);
-    } catch (e) { return "0.00"; }
-};
 
 const updateText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
 
 function updateNavbar(addr) {
     const btn = document.getElementById('connect-btn');
     if(btn) btn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
+}
+
+window.handleLogout = function() {
+    if (confirm("Disconnect wallet connection node link properties?")) {
+        localStorage.setItem('manualLogout', 'true');
+        signer = null;
+        contract = null;
+        window.location.href = "index.html";
+    }
 }
 
 if (window.ethereum) {
