@@ -2,7 +2,7 @@
 
 let provider, signer, contract, usdtContract;
 
-const CONTRACT_ADDRESS = "0x567982630826E9Fa7Cf6003036B5295d45526349"; // MetaAI Contract Address
+const CONTRACT_ADDRESS = "0x4b9635C27D01E5862b77931FE284294e82433f93"; // MetaAI Contract Address
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE";     // BEP20 USDT Token Address
 
 // Dynamic Variable Storage Matching Split Frontend Cards
