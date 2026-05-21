@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             
             <div class="hidden md:flex bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1 shadow-2xl">
                 <button class="nav-btn-new" onclick="location.href='index1.html'">Dashboard</button>
-                <button class="nav-btn-new" onclick="location.href='matrix.html'">Matrix</button>
+                <button class="nav-btn-new" onclick="location.href='index.html'">buy</button>
                 <button class="nav-btn-new" onclick="location.href='referral.html'">Network</button>
             </div>
             
