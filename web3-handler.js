@@ -121,10 +121,10 @@ window.handleBuyToken = async function() {
             return;
         }
 
-        const priceWei = ethers.utils.parseUnits(inputAmount.toString(), 18);
+        // BSC USDT 18 decimals use karta hai, agar apka token 6 decimals hai to '6' likhein
+        const priceWei = ethers.utils.parseUnits(inputAmount.toString(), 18); 
         const userAddress = await signer.getAddress();
         
-        // Extraction of sponsor footprint via manual form field or dynamic fallback query parameter
         let referrerAddress = document.getElementById('reg-referrer')?.value;
         if(!referrerAddress || !ethers.utils.isAddress(referrerAddress)) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -132,29 +132,34 @@ window.handleBuyToken = async function() {
         }
 
         const btn = document.getElementById('buy-now-btn');
-        if(btn) { btn.disabled = true; btn.innerText = "APPROVING USDT..."; }
+        if(btn) { btn.disabled = true; btn.innerText = "CHECKING ALLOWANCE..."; }
 
-        // ERC20 Allowance Checking Mechanism
+        // --- FIXED APPROVAL LOGIC ---
+        // Pehle check karein kya approve ki zarurat hai
         const currentAllowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
+        
         if (currentAllowance.lt(priceWei)) {
-            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, ethers.constants.MaxUint256);
+            btn.innerText = "APPROVING USDT...";
+            // MaxUint256 ki jagah exact amount ya safe high value use karein
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, priceWei);
             await approveTx.wait();
         }
         
-        if(btn) btn.innerText = "SWAPPING ASSETS...";
+        btn.innerText = "SWAPPING ASSETS...";
         
-        // Executes direct transaction block against buyTokens method
-        const tx = await contract.buyTokens(referrerAddress, priceWei, { gasLimit: 400000 });
-        alert("Transaction Broadcasted! Waiting for confirmation block...");
+        // Execute buyTokens
+        const tx = await contract.buyTokens(referrerAddress, priceWei, { gasLimit: 500000 });
+        alert("Transaction Broadcasted! Waiting for confirmation...");
         await tx.wait();
         
-        alert("Allocation successful! Node assets updated.");
-        window.location.href = "index1.html"; // Redirect user straight to analytics station upon purchase block success
+        alert("Allocation successful!");
+        window.location.href = "index1.html";
         
     } catch (err) { 
         console.error("Swap Core Failure Log:", err);
-        alert("Transaction Aborted: " + (err.reason || err.message));
-        location.reload();
+        // Error ko readable banayein
+        alert("Transaction Aborted: " + (err.data?.message || err.message));
+        if(document.getElementById('buy-now-btn')) document.getElementById('buy-now-btn').disabled = false;
     }
 }
 
