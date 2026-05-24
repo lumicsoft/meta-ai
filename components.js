@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             <div class="hidden md:flex bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-1 shadow-2xl">
                 <button class="nav-btn-new" onclick="location.href='index1.html'">Dashboard</button>
                 <button class="nav-btn-new" onclick="location.href='index.html'">buy</button>
-                <button class="nav-btn-new" onclick="location.href='referral.html'">Network</button>
+                <button class="nav-btn-new" onclick="location.href='web.html'">Token info</button>
             </div>
             
             <div class="relative">
@@ -75,9 +75,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <div class="relative -top-8 w-14 h-14 bg-[#0a0f1d] rounded-full flex items-center justify-center border-4 border-[#04070c] shadow-lg">
                     ${metaAILogo}
                 </div>
-                <a href="history.html" class="flex flex-col items-center gap-1 text-gray-500">
-                    <i data-lucide="history" class="w-5 h-5"></i>
-                    <span class="text-[8px] font-bold uppercase">Ledger</span>
+                <a href="web.html" class="flex flex-col items-center gap-1 text-gray-500">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                    <span class="text-[8px] font-bold uppercase">info</span>
                 </a>
             </div>
         </div>
