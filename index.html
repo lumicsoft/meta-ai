@@ -74,7 +74,7 @@
         <div class="lg:col-span-6 flex justify-center w-full">
             <div class="w-full max-w-[430px] luxury-glass p-5 sm:p-6 rounded-3xl relative shadow-2xl overflow-hidden">
                 
-                <!-- WALLET LOCK OVERLAY (Jab tak wallet connect nahi hoga ye dikhega) -->
+                <!-- WALLET LOCK OVERLAY -->
                 <div id="wallet-lock-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center transition-all duration-300">
                     <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-4 animate-bounce">
                         <i data-lucide="wallet" class="w-8 h-8"></i>
@@ -178,50 +178,66 @@
     <script>
         lucide.createIcons();
 
-        let cachedContractRate = 0;
-
-        // 🔄 `web3-handler.js` ke existing functions ko bina crash kiye call karne ka logic
-        async function loadInitialPresaleMetrics() {
+        // 🔄 Live Realtime Calculation - Purely pulling data via async/await from getLiveRate()
+        async function calculateTokensReceived(usdtVal) {
+            const mtaField = document.getElementById('received-mta-tokens');
+            const rateDisplay = document.getElementById('node-rate-display');
+            
             try {
-                // 1. Agar wallet connected nahi bhi h, tab bhi ye function background rpc use karke data laega
+                if (typeof getLiveRate === "function") {
+                    // Direct dynamic extraction from web3-handler instance 
+                    const rate = await getLiveRate();
+                    const activeRate = parseFloat(rate);
+                    
+                    if (rateDisplay && activeRate > 0) {
+                        rateDisplay.innerText = `${activeRate.toFixed(2)} USDT`;
+                    }
+                    
+                    if (mtaField && usdtVal > 0 && activeRate > 0) {
+                        // Math: USDT Amount Input / Exact Live Phase Price = Expected MTA tokens
+                        mtaField.value = (parseFloat(usdtVal) / activeRate).toFixed(2);
+                    } else if (mtaField) {
+                        mtaField.value = "0.00";
+                    }
+                }
+            } catch (err) {
+                console.log("Error evaluating dynamic calculator matrix:", err);
+            }
+        }
+
+        // 📊 Contract Sync and Interface Layout Loader Bridge
+        async function syncContractMetricsToUI() {
+            try {
                 if (typeof syncPublicPhaseDataOnly === "function") {
                     await syncPublicPhaseDataOnly();
                 }
 
-                // 2. Ab `web3-handler.js` ke getLiveRate se contract rate fetch karein
-                if (typeof getLiveRate === "function") {
-                    const rate = await getLiveRate();
-                    cachedContractRate = parseFloat(rate);
-
-                    // Pura UI data update karein (Taaki locked state me bhi real data dikhe)
+                if (window.contract && typeof window.contract.currentPhase === "function") {
+                    const phaseId = await window.contract.currentPhase();
+                    
                     const badgeText = document.getElementById('phase-badge');
-                    if (badgeText && window.contract) {
-                        const phaseId = await window.contract.currentPhase();
+                    if (badgeText) {
                         badgeText.innerText = "Phase " + phaseId.toString();
-
-                        // Progress bar update matching contract
-                        const phaseObject = await window.contract.presalePhases(phaseId);
-                        const maxSupply = ethers.utils.formatEther(phaseObject.maxSupply);
-                        const totalSold = ethers.utils.formatEther(phaseObject.sold);
-                        const progressPct = (parseFloat(totalSold) / parseFloat(maxSupply)) * 100;
-                        document.getElementById('phase-progress-bar').style.width = progressPct + "%";
                     }
 
-                    // Default input state trigger karein
-                    calculateTokensReceived(document.getElementById('buy-usdt-amount').value);
+                    const phaseObject = await window.contract.presalePhases(phaseId);
+                    const maxSupply = ethers.utils.formatEther(phaseObject.maxSupply);
+                    const totalSold = ethers.utils.formatEther(phaseObject.sold);
+                    
+                    // Live dynamic percentage scaling layout updates
+                    const progressPct = (parseFloat(totalSold) / parseFloat(maxSupply)) * 100;
+                    const progressBar = document.getElementById('phase-progress-bar');
+                    if (progressBar) {
+                        progressBar.style.width = progressPct + "%";
+                    }
                 }
+                
+                // Initial execution update on page startup matching baseline inputs
+                const currentUsdtInput = document.getElementById('buy-usdt-amount').value;
+                await calculateTokensReceived(currentUsdtInput);
+                
             } catch (error) {
-                console.error("Presale dynamic metrics syncing paused:", error);
-            }
-        }
-
-        // Token Realtime Calculator Logic
-        function calculateTokensReceived(usdtVal) {
-            const mtaField = document.getElementById('received-mta-tokens');
-            if (mtaField && usdtVal > 0 && cachedContractRate > 0) {
-                mtaField.value = (parseFloat(usdtVal) / cachedContractRate).toFixed(2);
-            } else if (mtaField) {
-                mtaField.value = "0.00";
+                console.log("Queuing core block infrastructure synchronization loop...");
             }
         }
 
@@ -238,8 +254,7 @@
                 addrDisplay.innerText = walletAddress.substring(0,6) + "..." + walletAddress.substring(walletAddress.length - 4);
             }
             
-            // Session active hone par phir se active instance pull karein
-            loadInitialPresaleMetrics();
+            syncContractMetricsToUI();
         }
 
         function triggerGlobalWalletConnect() {
@@ -249,15 +264,13 @@
             else alert("Please click on the main 'Connect Wallet' button on top of the dashboard.");
         }
 
-        // --- DYNAMIC INITIALIZATION LOGIC ---
-        // componentsLoaded event ya fir standard load par instant sync trigger karein
+        // --- GLOBAL INITIALIZATION HOOK SEQUENCES ---
         window.addEventListener('load', () => {
-            // Give 500ms for web3-handler.js to create its global objects
-            setTimeout(() => {
-                loadInitialPresaleMetrics();
-            }, 500);
+            // Delay buffer to establish steady initialization frame windows
+            setTimeout(async () => {
+                await syncContractMetricsToUI();
+            }, 600);
 
-            // Active wallet check loop 
             const checkWalletStateInterval = setInterval(() => {
                 if (window.ethereum && window.ethereum.selectedAddress) {
                     initializeSwapUI(window.ethereum.selectedAddress);
