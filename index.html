@@ -11,6 +11,21 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030508; -webkit-tap-highlight-color: transparent; }
         .luxury-glass { background: linear-gradient(135deg, rgba(15, 23, 42, 0.45) 0%, rgba(6, 10, 18, 0.75) 100%); backdrop-filter: blur(24px); border: 1px solid rgba(6, 182, 212, 0.08); }
         .cyber-gradient { background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%); }
+        /* Ultra-Premium Luxury Button Glow Effects */
+        .premium-glow-btn {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #1d4ed8 100%);
+            box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4), 0 4px 20px rgba(6, 182, 212, 0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .premium-glow-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px 4px rgba(6, 182, 212, 0.4), 0 8px 25px rgba(59, 130, 246, 0.3);
+            filter: brightness(1.1);
+        }
+        .premium-glow-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 0 10px 2px rgba(6, 182, 212, 0.3);
+        }
     </style>
 </head>
 <body class="text-slate-200 min-h-screen relative overflow-x-hidden antialiased selection:bg-cyan-500/20">
@@ -139,14 +154,6 @@
                 <!-- Premium Ledger Calculations Metadata Box -->
                 <div class="mt-4 p-3.5 rounded-xl bg-slate-950/40 border border-white/[0.02] text-[11px] space-y-2 font-mono">
                     <div class="flex justify-between text-slate-500">
-                        <span>Node Index Price</span>
-                        <span class="text-slate-300">Phase Matrix Dynamic Rate</span>
-                    </div>
-                    <div class="flex justify-between text-slate-500">
-                        <span>Admin Gateway Protocol Fee (5%)</span>
-                        <span class="text-slate-300">Included on Contract Execution</span>
-                    </div>
-                    <div class="flex justify-between text-slate-500">
                         <span>Vesting Unlock Protocol</span>
                         <span class="text-cyan-400 font-bold">1% Linear Daily Continuous Release</span>
                     </div>
@@ -160,9 +167,9 @@
                     </div>
                 </div>
 
-                <!-- Execute Transaction Call Action Button Hooked to window handler -->
-                <button id="buy-now-btn" onclick="handleBuyToken()" class="w-full mt-5 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:opacity-95 text-white font-bold h-13 rounded-2xl transition-all shadow-md shadow-cyan-500/10 flex items-center justify-center gap-2 tracking-wide text-xs uppercase">
-                    Execute Secure Allocation Swap
+                <!-- Updated Luxury Glow Buy Now Button Layer -->
+                <button id="buy-now-btn" onclick="handleBuyToken()" class="w-full mt-5 premium-glow-btn text-white font-extrabold h-14 rounded-2xl flex items-center justify-center gap-2 tracking-wider text-sm uppercase">
+                    <i data-lucide="zap" class="w-4 h-4 text-amber-300 fill-amber-300 animate-pulse"></i> BUY NOW
                 </button>
             </div>
         </div>
