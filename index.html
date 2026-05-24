@@ -22,10 +22,9 @@
     <div class="absolute top-[-20%] left-[-10%] w-[320px] sm:w-[600px] h-[320px] sm:h-[600px] bg-cyan-500/10 rounded-full blur-[100px] sm:blur-[150px] pointer-events-none"></div>
     <div class="absolute bottom-[10%] right-[-10%] w-[400px] sm:w-[700px] h-[400px] sm:h-[700px] bg-indigo-600/5 rounded-full blur-[120px] sm:blur-[180px] pointer-events-none"></div>
 
-  
-
-            
-            </div>
+    <header>
+        <div class="container mx-auto">
+            <div></div>
         </div>
     </header>
 
@@ -96,7 +95,6 @@
                         <span class="font-mono text-slate-400" id="user-address">0x00...0000</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
-                        <!-- Hooked Input ID Element for transaction handling -->
                         <input type="number" id="buy-usdt-amount" placeholder="0.0" min="100" class="bg-transparent text-xl sm:text-2xl font-bold text-white focus:outline-none w-2/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="100" oninput="calculateTokensReceived(this.value)">
                         <div class="flex items-center gap-2 bg-slate-900 border border-white/[0.08] px-3 py-1.5 rounded-xl font-bold text-xs text-white shadow-inner">
                             <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" class="w-3.5 h-3.5 object-contain" alt="USDT">
@@ -122,7 +120,6 @@
                         <span class="font-mono">Est. Allocation</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
-                        <!-- Mapped estimated target field -->
                         <input type="number" id="received-mta-tokens" readonly placeholder="0.0" class="bg-transparent text-xl sm:text-2xl font-bold text-slate-400 focus:outline-none w-2/3" value="500">
                         <div class="flex items-center gap-1.5 bg-gradient-to-tr from-cyan-950 to-slate-900 border border-cyan-500/20 px-3 py-1.5 rounded-xl font-bold text-xs text-cyan-400">
                             <i data-lucide="cpu" class="w-3.5 h-3.5"></i> MTA
@@ -150,7 +147,6 @@
                 <div class="mt-4">
                     <div class="flex items-center gap-2 px-3 bg-slate-950/60 border border-white/[0.04] rounded-xl h-10 text-xs">
                         <i data-lucide="users" class="w-3.5 h-3.5 text-slate-500"></i>
-                        <!-- Connected target field identity input mapping -->
                         <input type="text" id="reg-referrer" placeholder="Sponsor Wallet Address (0x...)" class="bg-transparent text-slate-300 focus:outline-none w-full placeholder:text-slate-600 font-mono">
                     </div>
                 </div>
@@ -178,7 +174,6 @@
             const mtaField = document.getElementById('received-mta-tokens');
             const currentRateText = document.getElementById('node-rate-display') ? document.getElementById('node-rate-display').innerText : "$0.20";
             
-            // Extracts digit values from rates elements
             const preciseRate = parseFloat(currentRateText.replace(/[^0-9.]/g, '')) || 0.20;
             
             if(mtaField && usdtVal > 0) {
