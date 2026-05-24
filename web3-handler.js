@@ -183,8 +183,10 @@ window.handleBuyToken = async function() {
         if(btn) btn.innerText = "CONFIRMING...";
         alert("Transaction Broadcasted! Waiting for confirmation block...");
         
+        // Block confirmation ka waiting cycle
         await tx.wait();
         
+        // ✨ SUCCESS REDIRECTION TRIGGER: Ab transaction confirm hone ke BAAD hi index1.html par bheja jayega, chahe pehli baar ho ya baar-baar!
         alert("Allocation successful!");
         window.location.href = "index1.html";
         
@@ -204,7 +206,7 @@ window.handleBuyToken = async function() {
         // Button reset
         if(document.getElementById('buy-now-btn')) {
             document.getElementById('buy-now-btn').disabled = false;
-            document.getElementById('buy-now-btn').innerText = "EXECUTE SECURE ALLOCATION SWAP";
+            document.getElementById('buy-now-btn').innerText = "BUY NOW";
         }
     }
 }
@@ -258,7 +260,7 @@ async function getLiveRate() {
     }
 }
 
-// --- MODULE 4: LOGIN PROTOCOLS GATEWAY ---
+// --- MODULE 4: LOGIN PROTOCOLS GATEWAY (FIXED REDIRECTION LOOP) ---
 window.handleLogin = async function() {
     try {
         if (!window.ethereum) return alert("MetaMask or Trust Wallet required to authenticate login nodes.");
@@ -273,16 +275,10 @@ window.handleLogin = async function() {
         usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
         localStorage.removeItem('manualLogout');
         
-        // Query if user has total purchased assets inside the system
-        const purchaseData = await contract.getUserPurchaseDetails(userAddress);
-        const hasBoughtBefore = purchaseData.totalMtaTokensBought.gt(0);
+        // 🎯 CRITICAL FIX REMOVED: Pehle jo yahan check laga tha jo purane user ko seedhe index1.html par fenk deta tha, use permanently uda diya hai.
+        // Ab login/connect par koi restriction nahi hogi, user direct isi buy section application panel par setup hoga.
+        await setupApp(userAddress);
         
-        if (hasBoughtBefore) {
-            window.location.href = "index1.html"; // Dynamic route shift straight to operations data ledger page
-        } else {
-            // Direct flow bypasses error alerts - initializes terminal right away for native purchase entry
-            await setupApp(userAddress);
-        }
     } catch (err) {
         console.error("Authentication Process Error:", err);
     }
