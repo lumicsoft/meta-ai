@@ -432,14 +432,25 @@ function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
     }
 }
 
-// --- GLOBAL ATOMIC DOM UTILITIES ---
+// --- GLOBAL ATOMIC DOM UTILITIES (FIXED FOR GITHUB PAGES 404 & AUTOFILL) ---
 function renderWalletCredentialsString(walletAddress) {
     const addressBox = document.getElementById("user-address");
     if (addressBox) addressBox.innerText = `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`;
     
     const referralInputLinkElement = document.getElementById("refURL");
     if (referralInputLinkElement) {
-        referralInputLinkElement.value = `${window.location.origin}/index.html?ref=${walletAddress}`;
+        // Fix: window.location.origin ke badle href ka split structure use kiya h taaki sub-repositories automatic catch ho jayein
+        const currentCleanUrl = window.location.href.split('?')[0]; 
+        
+        // Fallback checks to ensure link targets core buy module context page
+        let targetBuyPageUrl = currentCleanUrl;
+        if (currentCleanUrl.includes('index1.html')) {
+            targetBuyPageUrl = currentCleanUrl.replace('index1.html', 'index.html');
+        } else if (currentCleanUrl.includes('web.html')) {
+            targetBuyPageUrl = currentCleanUrl.replace('web.html', 'index.html');
+        }
+        
+        referralInputLinkElement.value = `${targetBuyPageUrl}?ref=${walletAddress}`;
     }
 }
 
