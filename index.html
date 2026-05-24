@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: MIT
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,9 +10,6 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030508; -webkit-tap-highlight-color: transparent; }
         .luxury-glass { background: linear-gradient(135deg, rgba(15, 23, 42, 0.45) 0%, rgba(6, 10, 18, 0.75) 100%); backdrop-filter: blur(24px); border: 1px solid rgba(6, 182, 212, 0.08); }
-        .neon-glow-cyan { box-shadow: 0 0 30px rgba(6, 182, 212, 0.2); }
-        .premium-input:focus-within { border-color: rgba(6, 182, 212, 0.4); box-shadow: 0 0 20px rgba(6, 182, 212, 0.1); }
-        .text-gradient { background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%); -webkit-bg-clip: text; -webkit-text-fill-color: transparent; }
         .cyber-gradient { background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%); }
     </style>
 </head>
@@ -60,7 +56,7 @@
                 <div class="grid grid-cols-3 gap-3 pt-1 text-center">
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Node Rate</span>
-                        <span id="node-rate-display" class="text-sm font-extrabold text-white mt-0.5 block">-- USDT</span>
+                        <span id="node-rate-display" class="text-sm font-extrabold text-white mt-0.5 block">Loading...</span>
                     </div>
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Secure State</span>
@@ -182,70 +178,93 @@
     <script>
         lucide.createIcons();
 
-        // 1. Jab wallet connect ho jaye tab Swap lock overlay ko hatane aur real dynamic price sync karne ka function
-        function initializeSwapUI(walletAddress, currentContractRate) {
+        let cachedContractRate = 0;
+
+        // 🔄 `web3-handler.js` ke existing functions ko bina crash kiye call karne ka logic
+        async function loadInitialPresaleMetrics() {
+            try {
+                // 1. Agar wallet connected nahi bhi h, tab bhi ye function background rpc use karke data laega
+                if (typeof syncPublicPhaseDataOnly === "function") {
+                    await syncPublicPhaseDataOnly();
+                }
+
+                // 2. Ab `web3-handler.js` ke getLiveRate se contract rate fetch karein
+                if (typeof getLiveRate === "function") {
+                    const rate = await getLiveRate();
+                    cachedContractRate = parseFloat(rate);
+
+                    // Pura UI data update karein (Taaki locked state me bhi real data dikhe)
+                    const badgeText = document.getElementById('phase-badge');
+                    if (badgeText && window.contract) {
+                        const phaseId = await window.contract.currentPhase();
+                        badgeText.innerText = "Phase " + phaseId.toString();
+
+                        // Progress bar update matching contract
+                        const phaseObject = await window.contract.presalePhases(phaseId);
+                        const maxSupply = ethers.utils.formatEther(phaseObject.maxSupply);
+                        const totalSold = ethers.utils.formatEther(phaseObject.sold);
+                        const progressPct = (parseFloat(totalSold) / parseFloat(maxSupply)) * 100;
+                        document.getElementById('phase-progress-bar').style.width = progressPct + "%";
+                    }
+
+                    // Default input state trigger karein
+                    calculateTokensReceived(document.getElementById('buy-usdt-amount').value);
+                }
+            } catch (error) {
+                console.error("Presale dynamic metrics syncing paused:", error);
+            }
+        }
+
+        // Token Realtime Calculator Logic
+        function calculateTokensReceived(usdtVal) {
+            const mtaField = document.getElementById('received-mta-tokens');
+            if (mtaField && usdtVal > 0 && cachedContractRate > 0) {
+                mtaField.value = (parseFloat(usdtVal) / cachedContractRate).toFixed(2);
+            } else if (mtaField) {
+                mtaField.value = "0.00";
+            }
+        }
+
+        // Wallet synchronization and UI Unlock
+        function initializeSwapUI(walletAddress) {
             const overlay = document.getElementById('wallet-lock-overlay');
             if (overlay) {
                 overlay.style.opacity = '0';
-                setTimeout(() => overlay.remove(), 300); // 300ms glide animation ke baad node ko DOM se delete karega
+                setTimeout(() => overlay.remove(), 300);
             }
 
-            // Wallet text ko input layer par short karke set karein
             const addrDisplay = document.getElementById('user-address');
             if (addrDisplay && walletAddress) {
                 addrDisplay.innerText = walletAddress.substring(0,6) + "..." + walletAddress.substring(walletAddress.length - 4);
             }
-
-            // Pura balance input calculations active karein
-            const initialUsdt = document.getElementById('buy-usdt-amount').value;
-            calculateTokensReceived(initialUsdt);
-        }
-
-        // 2. Token Live dynamic calculator module logic
-        async function calculateTokensReceived(usdtVal) {
-            const mtaField = document.getElementById('received-mta-tokens');
-            const rateDisplay = document.getElementById('node-rate-display');
             
-            try {
-                // web3-handler.js ke live rates dynamic metrics trigger karein
-                const rate = await getLiveRate(); 
-                
-                if (rateDisplay) {
-                    rateDisplay.innerText = parseFloat(rate).toFixed(2) + " USDT";
-                }
-                
-                if (mtaField && usdtVal > 0) {
-                    // Calculation: Pay (USDT) / Rate = Tokens (MTA)
-                    mtaField.value = (parseFloat(usdtVal) / rate).toFixed(2);
-                } else if (mtaField) {
-                    mtaField.value = "0.00";
-                }
-            } catch (err) {
-                console.log("Waiting for global contract state connection...");
-            }
+            // Session active hone par phir se active instance pull karein
+            loadInitialPresaleMetrics();
         }
 
-        // 3. Global synchronization connector (Jo components.js ke session variables ke saath match karega)
         function triggerGlobalWalletConnect() {
-            // Agar components.js me connectWallet() function hai toh use run karega
-            if (typeof connectWallet === "function") {
-                connectWallet();
-            } else if (typeof handleConnectWallet === "function") {
-                handleConnectWallet();
-            } else {
-                alert("Please click on the main 'Connect Wallet' button on top of the dashboard.");
-            }
+            if (typeof connectWallet === "function") connectWallet();
+            else if (typeof handleConnectWallet === "function") handleConnectWallet();
+            else if (typeof handleLogin === "function") handleLogin();
+            else alert("Please click on the main 'Connect Wallet' button on top of the dashboard.");
         }
 
-        // 4. Background state checker loop (components.js ke status ko live catch karne ke liye)
-        const checkWalletStateInterval = setInterval(() => {
-            // Hum safe verify check kar rahe hain ki window interface ya ethers layer inject hui ya nahi
-            if (window.ethereum && window.ethereum.selectedAddress) {
-                const activeUserWallet = window.ethereum.selectedAddress;
-                initializeSwapUI(activeUserWallet);
-                clearInterval(checkWalletStateInterval);
-            }
-        }, 1000); // Har ek second me background refresh tracking checks trigger karega
+        // --- DYNAMIC INITIALIZATION LOGIC ---
+        // componentsLoaded event ya fir standard load par instant sync trigger karein
+        window.addEventListener('load', () => {
+            // Give 500ms for web3-handler.js to create its global objects
+            setTimeout(() => {
+                loadInitialPresaleMetrics();
+            }, 500);
+
+            // Active wallet check loop 
+            const checkWalletStateInterval = setInterval(() => {
+                if (window.ethereum && window.ethereum.selectedAddress) {
+                    initializeSwapUI(window.ethereum.selectedAddress);
+                    clearInterval(checkWalletStateInterval);
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>
