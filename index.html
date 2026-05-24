@@ -46,7 +46,7 @@
                 <div class="flex justify-between items-center text-xs sm:text-sm">
                     <div class="flex items-center gap-2">
                         <span class="text-slate-400">Current Phase:</span>
-                        <span id="phase-badge" class="text-white font-extrabold px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/20">Loading...</span>
+                        <span id="phase-badge" class="text-white font-extrabold px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/20">Phase 2</span>
                     </div>
                     <span class="text-cyan-400 font-mono font-bold"><span id="total-sold-tokens">0.00</span> / <span id="available-supply">0.00</span> MTA</span>
                 </div>
@@ -56,7 +56,7 @@
                 <div class="grid grid-cols-3 gap-3 pt-1 text-center">
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Node Rate</span>
-                        <span id="node-rate-display" class="text-sm font-extrabold text-white mt-0.5 block">Loading...</span>
+                        <span id="node-rate-display" class="text-sm font-extrabold text-white mt-0.5 block">0.50 USDT</span>
                     </div>
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Secure State</span>
@@ -178,74 +178,90 @@
     <script>
         lucide.createIcons();
 
-        // 🔄 Live Realtime Calculation - Purely pulling data via async/await from getLiveRate()
-        async function calculateTokensReceived(usdtVal) {
+        // 🎯 FIXED STATIC RATE DATABASE FOR INSTANT MAPPING (No RPC Traffic Lag)
+        const presaleRateMatrix = {
+            1: 0.20,
+            2: 0.50,
+            3: 5.00,
+            4: 10.00
+        };
+
+        // Baseline rate defaults safely to Phase 2 (0.50) on boot sequence
+        let dynamicActiveRate = 0.50; 
+
+        // 🔄 Super-Fast Local Memory Calculator (Runs instantly on user input)
+        function calculateTokensReceived(usdtVal) {
             const mtaField = document.getElementById('received-mta-tokens');
-            const rateDisplay = document.getElementById('node-rate-display');
-            
-            // Validation: input value clean karke check karein
             const parseAmount = parseFloat(usdtVal);
+            
             if (isNaN(parseAmount) || parseAmount <= 0) {
                 if (mtaField) mtaField.value = "0.00";
                 return;
             }
             
-            try {
-                if (typeof getLiveRate === "function") {
-                    // Direct dynamic extraction from web3-handler instance 
-                    const rate = await getLiveRate();
-                    const activeRate = parseFloat(rate);
-                    
-                    // Fixed Check: Agar fallback rate 0 ya crash values par ho toh calculation secure block karein
-                    if (activeRate && activeRate > 0) {
-                        if (rateDisplay) {
-                            rateDisplay.innerText = `${activeRate.toFixed(2)} USDT`;
-                        }
-                        // Pure Math Matrix Calculation Injection
-                        const finalMtaCalculated = (parseAmount / activeRate).toFixed(2);
-                        if (mtaField) {
-                            mtaField.value = finalMtaCalculated;
-                        }
-                    }
-                }
-            } catch (err) {
-                console.log("Error evaluating dynamic calculator matrix:", err);
+            // Fixed dynamic calculation based on pure Javascript memory state
+            if (mtaField && dynamicActiveRate > 0) {
+                mtaField.value = (parseAmount / dynamicActiveRate).toFixed(2);
             }
         }
 
-        // 📊 Contract Sync and Interface Layout Loader Bridge
+        // 📊 Dynamic Matrix Allocator (Syncs with Contract currentPhase Index)
         async function syncContractMetricsToUI() {
             try {
                 if (typeof syncPublicPhaseDataOnly === "function") {
                     await syncPublicPhaseDataOnly();
                 }
 
-                if (window.contract && typeof window.contract.currentPhase === "function") {
-                    const phaseId = await window.contract.currentPhase();
-                    
-                    const badgeText = document.getElementById('phase-badge');
-                    if (badgeText) {
-                        badgeText.innerText = "Phase " + phaseId.toString();
+                // Call the contract proxy module to check active phase ID
+                if (typeof getLiveRate === "function") {
+                    // Trigger dynamic lookup to fetch contract current phase identifier
+                    let activeContractInstance = window.contract;
+                    if (!activeContractInstance && typeof CONTRACT_ADDRESS !== 'undefined') {
+                        const publicProvider = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
+                        activeContractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
                     }
-
-                    const phaseObject = await window.contract.presalePhases(phaseId);
-                    const maxSupply = ethers.utils.formatEther(phaseObject.maxSupply);
-                    const totalSold = ethers.utils.formatEther(phaseObject.sold);
                     
-                    // Live dynamic percentage scaling layout updates
-                    const progressPct = (parseFloat(totalSold) / parseFloat(maxSupply)) * 100;
-                    const progressBar = document.getElementById('phase-progress-bar');
-                    if (progressBar) {
-                        progressBar.style.width = progressPct + "%";
+                    if (activeContractInstance) {
+                        const rawPhaseId = await activeContractInstance.currentPhase();
+                        const activePhaseNum = parseInt(rawPhaseId.toString());
+                        
+                        // Map the price chart using local database array matching the structure
+                        if (presaleRateMatrix[activePhaseNum]) {
+                            dynamicActiveRate = presaleRateMatrix[activePhaseNum];
+                        } else {
+                            // Backup fallback if phase price object scaling returns higher states
+                            const contractRate = await getLiveRate();
+                            if (contractRate > 0) dynamicActiveRate = parseFloat(contractRate);
+                        }
+
+                        // Sync text boxes to map true rate indicator label
+                        const rateDisplay = document.getElementById('node-rate-display');
+                        if (rateDisplay) {
+                            rateDisplay.innerText = `${dynamicActiveRate.toFixed(2)} USDT`;
+                        }
+                        
+                        const badgeText = document.getElementById('phase-badge');
+                        if (badgeText) {
+                            badgeText.innerText = "Phase " + activePhaseNum.toString();
+                        }
+
+                        // Adjust progress bars metrics mapping sequentially
+                        const phaseObject = await activeContractInstance.presalePhases(rawPhaseId);
+                        const maxSupply = ethers.utils.formatEther(phaseObject.maxSupply);
+                        const totalSold = ethers.utils.formatEther(phaseObject.sold);
+                        const progressPct = (parseFloat(totalSold) / parseFloat(maxSupply)) * 100;
+                        
+                        const progressBar = document.getElementById('phase-progress-bar');
+                        if (progressBar) progressBar.style.width = progressPct + "%";
                     }
                 }
                 
-                // CRITICAL FIX: Ensure rate calculation gets re-triggered once metrics/providers are fully up
-                const currentUsdtInput = document.getElementById('buy-usdt-amount').value;
-                await calculateTokensReceived(currentUsdtInput);
+                // Fire instant calculation engine with zero delays
+                calculateTokensReceived(document.getElementById('buy-usdt-amount').value);
                 
             } catch (error) {
-                console.log("Queuing core block infrastructure synchronization loop...");
+                console.log("Sync sequence mapping handled on public nodes background channel...");
+                calculateTokensReceived(document.getElementById('buy-usdt-amount').value);
             }
         }
 
@@ -274,7 +290,6 @@
 
         // --- GLOBAL INITIALIZATION HOOK SEQUENCES ---
         window.addEventListener('load', () => {
-            // Delay buffer to establish steady initialization frame windows
             setTimeout(async () => {
                 await syncContractMetricsToUI();
             }, 600);
