@@ -169,19 +169,20 @@
     <script>
         lucide.createIcons();
 
-        // Multiplier utility logic calculates raw values based on live rates
-        function calculateTokensReceived(usdtVal) {
-            const mtaField = document.getElementById('received-mta-tokens');
-            const currentRateText = document.getElementById('node-rate-display') ? document.getElementById('node-rate-display').innerText : "$0.20";
-            
-            const preciseRate = parseFloat(currentRateText.replace(/[^0-9.]/g, '')) || 0.20;
-            
-            if(mtaField && usdtVal > 0) {
-                mtaField.value = (parseFloat(usdtVal) / preciseRate).toFixed(2);
-            } else if(mtaField) {
-                mtaField.value = "0.00";
-            }
-        }
+      // HTML ke script tag mein ye change karein
+async function calculateTokensReceived(usdtVal) {
+    const mtaField = document.getElementById('received-mta-tokens');
+    
+    // Live rate call karein
+    const rate = await getLiveRate(); 
+    
+    if(mtaField && usdtVal > 0) {
+        // Calculation: Pay (USDT) / Rate = Tokens (MTA)
+        mtaField.value = (parseFloat(usdtVal) / rate).toFixed(2);
+    } else if(mtaField) {
+        mtaField.value = "0.00";
+    }
+}
     </script>
 </body>
 </html>
