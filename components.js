@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     `;
 
     // 4. Inject Premium Global Desktop Navbar (Meta AI Branding)
+    // Modified: Added 'hidden md:flex' on connect button section to clear mobile top alignment overlaps
     const navHTML = `
         <nav class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex justify-between items-center relative z-[100]">
             <div class="flex items-center gap-3 cursor-pointer group" onclick="location.href='index1.html'">
@@ -48,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <button class="nav-btn-new" onclick="location.href='web.html'">Token info</button>
             </div>
             
-            <div class="relative">
+            <div class="hidden md:flex relative">
                 <button id="connect-btn" onclick="handleLogin()" class="new-cyber-btn">
                     <span>${isConnected ? walletAddress.substring(0, 6) + "..." + walletAddress.substring(38) : "Connect Wallet"}</span>
                 </button>
@@ -64,11 +65,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     `;
     document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-    // 5. Updated Mobile Premium Navigation Hub (Aligning all 3 Desktop Links Flawlessly)
+    // 5. Updated Mobile Premium Navigation Hub (Integrated Adaptive Wallet Trigger Console)
     const currentPath = window.location.pathname;
     const mobileNavHTML = `
         <div class="fixed bottom-6 left-4 right-4 md:hidden z-[9999]">
-            <div class="bg-[#04070c]/90 backdrop-blur-2xl border border-white/[0.08] rounded-3xl flex justify-between items-center px-4 py-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+            <div class="bg-[#04070c]/90 backdrop-blur-2xl border border-white/[0.08] rounded-3xl flex justify-between items-center px-3 py-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
                 
                 <!-- Link 1: Dashboard -->
                 <a href="index1.html" class="flex flex-col items-center gap-1 flex-1 transition-all duration-200 ${currentPath.includes('index1') ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}">
@@ -82,10 +83,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <span class="text-[9px] font-black tracking-wider uppercase">Buy</span>
                 </a>
 
-                <!-- Centered Luxury Logo Space Buffer -->
-                <div class="relative flex-1 flex justify-center h-6">
-                    <div class="absolute -top-9 w-14 h-14 bg-[#070b12] rounded-full flex items-center justify-center border-4 border-[#030508] shadow-xl shadow-cyan-500/10">
-                        <div class="w-11 h-11">${metaAILogo}</div>
+                <!-- Centered Luxury Interactive Wallet Logo Trigger -->
+                <div class="relative flex-1 flex justify-center h-6 cursor-pointer" onclick="handleLogin()">
+                    <div class="absolute -top-9 w-14 h-14 bg-[#070b12] rounded-full flex items-center justify-center border-4 border-[#030508] shadow-xl ${isConnected ? 'shadow-emerald-500/20 border-emerald-500/30' : 'shadow-cyan-500/10'}">
+                        <div class="w-11 h-11 flex items-center justify-center rounded-xl ${isConnected ? 'bg-emerald-500/10 text-emerald-400' : 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-white'}">
+                            <i data-lucide="${isConnected ? 'wallet' : 'cpu'}" class="w-5 h-5 ${isConnected ? '' : 'animate-pulse'}"></i>
+                        </div>
                     </div>
                 </div>
                 
