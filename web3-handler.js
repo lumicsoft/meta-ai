@@ -218,7 +218,19 @@ window.handleSwapAndBurn = async function() {
         alert("Liquidation failed: " + (err.reason || err.message));
     }
 }
-
+// Rate fetch karne ka function
+async function getLiveRate() {
+    try {
+        if (!contract) return 0.20; // Agar contract load nahi hua
+        const currentPhaseIdx = await contract.currentPhase();
+        const phase = await contract.presalePhases(currentPhaseIdx);
+        // Contract price 18 decimals mein hai, use ether mein format karein
+        return parseFloat(ethers.utils.formatEther(phase.price));
+    } catch (e) {
+        console.error("Rate fetch error:", e);
+        return 0.20; // Default fallback
+    }
+}
 // --- MODULE 4: LOGIN PROTOCOLS GATEWAY ---
 window.handleLogin = async function() {
     try {
