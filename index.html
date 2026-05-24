@@ -104,7 +104,7 @@
                         <span class="font-mono text-slate-400" id="user-address">0x00...0000</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
-                        <input type="number" id="buy-usdt-amount" placeholder="0.0" min="100" class="bg-transparent text-xl sm:text-2xl font-bold text-white focus:outline-none w-2/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="100" oninput="calculateTokensReceived(this.value)">
+                        <input type="number" id="buy-usdt-amount" placeholder="100" min="100" class="bg-transparent text-xl sm:text-2xl font-bold text-white focus:outline-none w-2/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="100" oninput="calculateTokensReceived(this.value)">
                         <div class="flex items-center gap-2 bg-slate-900 border border-white/[0.08] px-3 py-1.5 rounded-xl font-bold text-xs text-white shadow-inner">
                             <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" class="w-3.5 h-3.5 object-contain" alt="USDT">
                             USDT
@@ -129,7 +129,7 @@
                         <span class="font-mono">Est. Allocation</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
-                        <input type="number" id="received-mta-tokens" readonly placeholder="0.0" class="bg-transparent text-xl sm:text-2xl font-bold text-slate-400 focus:outline-none w-2/3" value="0.00">
+                        <input type="number" id="received-mta-tokens" readonly placeholder="0.00" class="bg-transparent text-xl sm:text-2xl font-bold text-slate-400 focus:outline-none w-2/3" value="0.00">
                         <div class="flex items-center gap-1.5 bg-gradient-to-tr from-cyan-950 to-slate-900 border border-cyan-500/20 px-3 py-1.5 rounded-xl font-bold text-xs text-cyan-400">
                             <i data-lucide="cpu" class="w-3.5 h-3.5"></i> MTA
                         </div>
@@ -183,21 +183,29 @@
             const mtaField = document.getElementById('received-mta-tokens');
             const rateDisplay = document.getElementById('node-rate-display');
             
+            // Validation: input value clean karke check karein
+            const parseAmount = parseFloat(usdtVal);
+            if (isNaN(parseAmount) || parseAmount <= 0) {
+                if (mtaField) mtaField.value = "0.00";
+                return;
+            }
+            
             try {
                 if (typeof getLiveRate === "function") {
                     // Direct dynamic extraction from web3-handler instance 
                     const rate = await getLiveRate();
                     const activeRate = parseFloat(rate);
                     
-                    if (rateDisplay && activeRate > 0) {
-                        rateDisplay.innerText = `${activeRate.toFixed(2)} USDT`;
-                    }
-                    
-                    if (mtaField && usdtVal > 0 && activeRate > 0) {
-                        // Math: USDT Amount Input / Exact Live Phase Price = Expected MTA tokens
-                        mtaField.value = (parseFloat(usdtVal) / activeRate).toFixed(2);
-                    } else if (mtaField) {
-                        mtaField.value = "0.00";
+                    // Fixed Check: Agar fallback rate 0 ya crash values par ho toh calculation secure block karein
+                    if (activeRate && activeRate > 0) {
+                        if (rateDisplay) {
+                            rateDisplay.innerText = `${activeRate.toFixed(2)} USDT`;
+                        }
+                        // Pure Math Matrix Calculation Injection
+                        const finalMtaCalculated = (parseAmount / activeRate).toFixed(2);
+                        if (mtaField) {
+                            mtaField.value = finalMtaCalculated;
+                        }
                     }
                 }
             } catch (err) {
@@ -232,7 +240,7 @@
                     }
                 }
                 
-                // Initial execution update on page startup matching baseline inputs
+                // CRITICAL FIX: Ensure rate calculation gets re-triggered once metrics/providers are fully up
                 const currentUsdtInput = document.getElementById('buy-usdt-amount').value;
                 await calculateTokensReceived(currentUsdtInput);
                 
