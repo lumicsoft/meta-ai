@@ -4,6 +4,7 @@ let provider, signer, contract, usdtContract;
 
 const CONTRACT_ADDRESS = "0x4b9635C27D01E5862b77931FE284294e82433f93"; // MetaAI Contract Address
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE";     // BEP20 USDT Token Address
+const PUBLIC_RPC_URL = "https://bsc-testnet.publicnode.com";              // High-Performance BSC Testnet Public RPC Node
 
 // Dynamic Variable Storage Matching Split Frontend Cards
 window.userData = {
@@ -50,12 +51,16 @@ function checkReferralURL() {
 // --- INITIALIZATION TERMINAL PROTOCOL ---
 async function init() {
     checkReferralURL();
+    
+    // CRITICAL FIX: Wallet session validation ka wait kiye bina, background rpc nodes se instantly market data update trigger karein
+    await syncPublicPhaseDataOnly();
+
     if (window.ethereum) {
         try {
             // Ethers v5 provider initialization
             provider = new ethers.providers.Web3Provider(window.ethereum, "any");
             
-            // Contract initialization (Provider mode - Bina signer ke bhi read kar sakte hain)
+            // Contract initialization
             contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
             usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, provider);
 
@@ -87,11 +92,14 @@ async function init() {
         console.warn("Web3 Extension missing. Falling back to static mode.");
     }
 }
-// --- PUBLIC PROVIDER SYNC MODULE ---
+
+// --- PUBLIC PROVIDER SYNC MODULE (Purely Driven via Public RPC Node to bypass initial local fallback gaps) ---
 async function syncPublicPhaseDataOnly() {
     try {
-        const tempProv = new ethers.providers.Web3Provider(window.ethereum, "any");
-        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, tempProv);
+        // Fix: Local window injection context check par dependency hatakar clear network rpc parse kiya h
+        const publicProvider = new ethers.providers.JsonRpcProvider(PUBLIC_RPC_URL);
+        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
+        
         const currentPhaseIdx = await tempContract.currentPhase();
         const phaseObject = await tempContract.presalePhases(currentPhaseIdx);
 
@@ -100,12 +108,17 @@ async function syncPublicPhaseDataOnly() {
         const capacitySupplyMax = ethers.utils.formatEther(phaseObject.maxSupply);
         const supplyAvailableCalculated = parseFloat(capacitySupplyMax) - parseFloat(tokensSold);
 
-        updateText('total-sold-tokens', parseFloat(tokensSold).toLocaleString());
-        updateText('available-supply', parseFloat(supplyAvailableCalculated).toLocaleString());
+        updateText('total-sold-tokens', parseFloat(tokensSold).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        updateText('available-supply', parseFloat(supplyAvailableCalculated).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        
+        const phaseBadgeElement = document.getElementById('phase-badge');
+        if (phaseBadgeElement) {
+            phaseBadgeElement.innerText = "Phase " + currentPhaseIdx.toString();
+        }
         
         const priceIndicatorLabel = document.getElementById('node-rate-display');
         if (priceIndicatorLabel) {
-            priceIndicatorLabel.innerText = `$${parseFloat(tokenPriceString).toFixed(2)} USDT`;
+            priceIndicatorLabel.innerText = `${parseFloat(tokenPriceString).toFixed(2)} USDT`;
         }
     } catch (e) {
         console.log("Public allocation ledger display synced:", e);
@@ -195,6 +208,7 @@ window.handleBuyToken = async function() {
         }
     }
 }
+
 // --- MODULE 2: EXTRACT RELEASES FROM VAULT (WITHDRAW) ---
 window.handleWithdrawAvailable = async function() {
     try {
@@ -224,19 +238,26 @@ window.handleSwapAndBurn = async function() {
         alert("Liquidation failed: " + (err.reason || err.message));
     }
 }
-// Rate fetch karne ka function
+
+// --- DYNAMIC LIVE RATE MULTIPLIER (Directly querying from public rpc node to secure real active instance rates) ---
 async function getLiveRate() {
     try {
-        if (!contract) return 0.20; // Agar contract load nahi hua
-        const currentPhaseIdx = await contract.currentPhase();
-        const phase = await contract.presalePhases(currentPhaseIdx);
+        let activeContractInstance = contract;
+        // Agar main local object wallet initialization bypass state me ho, toh instant proxy configuration use karein
+        if (!activeContractInstance) {
+            const publicProvider = new ethers.providers.JsonRpcProvider(PUBLIC_RPC_URL);
+            activeContractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
+        }
+        const currentPhaseIdx = await activeContractInstance.currentPhase();
+        const phase = await activeContractInstance.presalePhases(currentPhaseIdx);
         // Contract price 18 decimals mein hai, use ether mein format karein
         return parseFloat(ethers.utils.formatEther(phase.price));
     } catch (e) {
         console.error("Rate fetch error:", e);
-        return 0.20; // Default fallback
+        return 0.50; // Dynamic fallback backup targeting Phase 2 value standard structures
     }
 }
+
 // --- MODULE 4: LOGIN PROTOCOLS GATEWAY ---
 window.handleLogin = async function() {
     try {
@@ -312,8 +333,14 @@ async function setupApp(address) {
 // --- RENDER CURRENT PHASE DYNAMIC DATA FIELDS ---
 async function syncCurrentPhaseData() {
     try {
-        const currentPhaseIdx = await contract.currentPhase();
-        const phaseObject = await contract.presalePhases(currentPhaseIdx);
+        let activeContractInstance = contract;
+        if (!activeContractInstance) {
+            const publicProvider = new ethers.providers.JsonRpcProvider(PUBLIC_RPC_URL);
+            activeContractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
+        }
+        
+        const currentPhaseIdx = await activeContractInstance.currentPhase();
+        const phaseObject = await activeContractInstance.presalePhases(currentPhaseIdx);
 
         const tokenPriceString = ethers.utils.formatEther(phaseObject.price);
         const tokensSold = ethers.utils.formatEther(phaseObject.sold);
@@ -326,7 +353,7 @@ async function syncCurrentPhaseData() {
         
         const priceIndicatorLabel = document.getElementById('node-rate-display');
         if (priceIndicatorLabel) {
-            priceIndicatorLabel.innerText = `$${parseFloat(tokenPriceString).toFixed(2)} USDT`;
+            priceIndicatorLabel.innerText = `${parseFloat(tokenPriceString).toFixed(2)} USDT`;
         }
     } catch (err) {
         console.error("Presale global ledger fetch metrics trace error:", err);
