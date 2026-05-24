@@ -64,21 +64,37 @@ document.addEventListener("DOMContentLoaded", async function () {
     `;
     document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-    // 5. Mobile Nav
+    // 5. Updated Mobile Premium Navigation Hub (Aligning all 3 Desktop Links Flawlessly)
+    const currentPath = window.location.pathname;
     const mobileNavHTML = `
-        <div class="fixed bottom-6 left-3 right-3 md:hidden z-[9999]">
-            <div class="bg-[#04070c]/95 backdrop-blur-3xl border border-white/10 rounded-[2.2rem] flex justify-between items-center px-6 py-4 shadow-2xl">
-                <a href="index1.html" class="flex flex-col items-center gap-1 text-cyan-400">
+        <div class="fixed bottom-6 left-4 right-4 md:hidden z-[9999]">
+            <div class="bg-[#04070c]/90 backdrop-blur-2xl border border-white/[0.08] rounded-3xl flex justify-between items-center px-4 py-3.5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                
+                <!-- Link 1: Dashboard -->
+                <a href="index1.html" class="flex flex-col items-center gap-1 flex-1 transition-all duration-200 ${currentPath.includes('index1') ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                    <span class="text-[8px] font-bold uppercase">Home</span>
+                    <span class="text-[9px] font-black tracking-wider uppercase">Dashboard</span>
                 </a>
-                <div class="relative -top-8 w-14 h-14 bg-[#0a0f1d] rounded-full flex items-center justify-center border-4 border-[#04070c] shadow-lg">
-                    ${metaAILogo}
+                
+                <!-- Link 2: Buy Now -->
+                <a href="index.html" class="flex flex-col items-center gap-1 flex-1 transition-all duration-200 ${currentPath.endsWith('index.html') || currentPath.endsWith('/') ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                    <span class="text-[9px] font-black tracking-wider uppercase">Buy</span>
+                </a>
+
+                <!-- Centered Luxury Logo Space Buffer -->
+                <div class="relative flex-1 flex justify-center h-6">
+                    <div class="absolute -top-9 w-14 h-14 bg-[#070b12] rounded-full flex items-center justify-center border-4 border-[#030508] shadow-xl shadow-cyan-500/10">
+                        <div class="w-11 h-11">${metaAILogo}</div>
+                    </div>
                 </div>
-                <a href="web.html" class="flex flex-col items-center gap-1 text-gray-500">
+                
+                <!-- Link 3: Token Info -->
+                <a href="web.html" class="flex flex-col items-center gap-1 flex-1 transition-all duration-200 ${currentPath.includes('web.html') ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'}">
                     <i data-lucide="info" class="w-5 h-5"></i>
-                    <span class="text-[8px] font-bold uppercase">info</span>
+                    <span class="text-[9px] font-black tracking-wider uppercase">Info</span>
                 </a>
+                
             </div>
         </div>
     `;
