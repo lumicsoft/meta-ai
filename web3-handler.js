@@ -112,14 +112,11 @@ async function syncPublicPhaseDataOnly() {
     }
 }
 
-// --- MODULE 1: BUY NOW TOKEN INTERFACE ---
 window.handleBuyToken = async function() {
-    // 1. Connection Check: Agar wallet connected nahi hai to pehle login process chalayein
+    // 1. Connection Check
     if (!signer || !usdtContract) {
         alert("Wallet connect nahi hai. Connecting now...");
         await window.handleLogin();
-        
-        // Login ke baad verify karein ki connection hua ya nahi
         if (!signer) {
             alert("Connection cancel kar diya gaya.");
             return;
@@ -133,12 +130,12 @@ window.handleBuyToken = async function() {
             return;
         }
 
-        // BSC USDT (BEP20) ke liye 18 decimals use karein
-        const priceWei = ethers.utils.parseUnits(inputAmount.toString(), 18); 
+        // BSC USDT ke liye 18 decimals (agar 6 hai to '6' likhein)
+        const amountWei = ethers.utils.parseUnits(inputAmount.toString(), 18); 
         const userAddress = await signer.getAddress();
         
-        // Referrer handle karna
-        let referrerAddress = document.getElementById('reg-referrer')?.value;
+        // Referral Cleanup
+        let referrerAddress = document.getElementById('reg-referrer')?.value.trim();
         if(!referrerAddress || !ethers.utils.isAddress(referrerAddress)) {
             const urlParams = new URLSearchParams(window.location.search);
             referrerAddress = urlParams.get('ref') || "0x0000000000000000000000000000000000000000";
@@ -147,23 +144,31 @@ window.handleBuyToken = async function() {
         const btn = document.getElementById('buy-now-btn');
         if(btn) { btn.disabled = true; btn.innerText = "CHECKING ALLOWANCE..."; }
 
-        // --- APPROVAL LOGIC ---
+        // --- FIXED APPROVAL LOGIC ---
         const currentAllowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
         
-        if (currentAllowance.lt(priceWei)) {
+        if (currentAllowance.lt(amountWei)) {
             if(btn) btn.innerText = "APPROVING USDT...";
-            // Approve transaction
-            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, priceWei);
+            
+            // Step 1: Kuch tokens ke liye allowance reset karna zaruri hai
+            if (currentAllowance.gt(0)) {
+                const resetTx = await usdtContract.approve(CONTRACT_ADDRESS, 0);
+                await resetTx.wait();
+            }
+            
+            // Step 2: New Approval
+            const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, amountWei);
             await approveTx.wait();
         }
         
         if(btn) btn.innerText = "SWAPPING ASSETS...";
         
         // --- EXECUTION ---
-        const tx = await contract.buyTokens(referrerAddress, priceWei, { gasLimit: 500000 });
+        // Gas limit 600000 kardi hai complex logic ke liye
+        const tx = await contract.buyTokens(referrerAddress, amountWei, { gasLimit: 600000 });
         
         if(btn) btn.innerText = "CONFIRMING...";
-        alert("Transaction Broadcasted! Waiting for confirmation...");
+        alert("Transaction Broadcasted! Waiting for confirmation block...");
         
         await tx.wait();
         
@@ -173,22 +178,23 @@ window.handleBuyToken = async function() {
     } catch (err) { 
         console.error("Swap Core Failure Log:", err);
         
-        // User-friendly error messages
+        // Error handling
         let errorMessage = err.data?.message || err.message;
         if (errorMessage.includes("user rejected")) {
             errorMessage = "User ne transaction reject kar di.";
+        } else if (errorMessage.includes("execution reverted")) {
+            errorMessage = "Contract Reverted: Check if Phase is active or minimum amount is correct.";
         }
         
         alert("Transaction Aborted: " + errorMessage);
         
-        // Button reset karein
+        // Button reset
         if(document.getElementById('buy-now-btn')) {
             document.getElementById('buy-now-btn').disabled = false;
-            document.getElementById('buy-now-btn').innerText = "BUY NOW";
+            document.getElementById('buy-now-btn').innerText = "EXECUTE SECURE ALLOCATION SWAP";
         }
     }
 }
-
 // --- MODULE 2: EXTRACT RELEASES FROM VAULT (WITHDRAW) ---
 window.handleWithdrawAvailable = async function() {
     try {
