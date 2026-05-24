@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Meta AI (MTA) - Premium Exchange Node</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #030508; -webkit-tap-highlight-color: transparent; }
@@ -49,17 +50,17 @@
                 <div class="flex justify-between items-center text-xs sm:text-sm">
                     <div class="flex items-center gap-2">
                         <span class="text-slate-400">Current Phase:</span>
-                        <span class="text-white font-extrabold px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/20">Phase Live</span>
+                        <span id="phase-badge" class="text-white font-extrabold px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded border border-cyan-500/20">Loading...</span>
                     </div>
                     <span class="text-cyan-400 font-mono font-bold"><span id="total-sold-tokens">0.00</span> / <span id="available-supply">0.00</span> MTA</span>
                 </div>
                 <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden p-[1px] border border-white/[0.05]">
-                    <div class="cyber-gradient h-full rounded-full transition-all duration-700" style="width: 35%"></div>
+                    <div id="phase-progress-bar" class="cyber-gradient h-full rounded-full transition-all duration-700" style="width: 0%"></div>
                 </div>
                 <div class="grid grid-cols-3 gap-3 pt-1 text-center">
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Node Rate</span>
-                        <span id="node-rate-display" class="text-sm font-extrabold text-white mt-0.5 block">0.20 USDT</span>
+                        <span id="node-rate-display" class="text-sm font-extrabold text-white mt-0.5 block">-- USDT</span>
                     </div>
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Secure State</span>
@@ -77,6 +78,18 @@
         <div class="lg:col-span-6 flex justify-center w-full">
             <div class="w-full max-w-[430px] luxury-glass p-5 sm:p-6 rounded-3xl relative shadow-2xl overflow-hidden">
                 
+                <!-- WALLET LOCK OVERLAY (Jab tak wallet connect nahi hoga ye dikhega) -->
+                <div id="wallet-lock-overlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center transition-all duration-300">
+                    <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-4 animate-bounce">
+                        <i data-lucide="wallet" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Cryptographic Node Locked</h3>
+                    <p class="text-slate-400 text-xs max-w-xs mb-6">Please link your decentralized Web3 wallet using the dashboard connector to synchronize live matrix rates and secure your allocation node.</p>
+                    <button onclick="triggerGlobalWalletConnect()" class="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-white font-bold text-xs rounded-xl transition-all uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="link" class="w-3.5 h-3.5"></i> Connect Wallet Now
+                    </button>
+                </div>
+
                 <!-- Inner Decorative Shimmer Shadow -->
                 <div class="absolute -top-12 -right-12 w-32 h-32 bg-cyan-400/10 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -120,7 +133,7 @@
                         <span class="font-mono">Est. Allocation</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
-                        <input type="number" id="received-mta-tokens" readonly placeholder="0.0" class="bg-transparent text-xl sm:text-2xl font-bold text-slate-400 focus:outline-none w-2/3" value="500">
+                        <input type="number" id="received-mta-tokens" readonly placeholder="0.0" class="bg-transparent text-xl sm:text-2xl font-bold text-slate-400 focus:outline-none w-2/3" value="0.00">
                         <div class="flex items-center gap-1.5 bg-gradient-to-tr from-cyan-950 to-slate-900 border border-cyan-500/20 px-3 py-1.5 rounded-xl font-bold text-xs text-cyan-400">
                             <i data-lucide="cpu" class="w-3.5 h-3.5"></i> MTA
                         </div>
@@ -169,20 +182,70 @@
     <script>
         lucide.createIcons();
 
-      // HTML ke script tag mein ye change karein
-async function calculateTokensReceived(usdtVal) {
-    const mtaField = document.getElementById('received-mta-tokens');
-    
-    // Live rate call karein
-    const rate = await getLiveRate(); 
-    
-    if(mtaField && usdtVal > 0) {
-        // Calculation: Pay (USDT) / Rate = Tokens (MTA)
-        mtaField.value = (parseFloat(usdtVal) / rate).toFixed(2);
-    } else if(mtaField) {
-        mtaField.value = "0.00";
-    }
-}
+        // 1. Jab wallet connect ho jaye tab Swap lock overlay ko hatane aur real dynamic price sync karne ka function
+        function initializeSwapUI(walletAddress, currentContractRate) {
+            const overlay = document.getElementById('wallet-lock-overlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 300); // 300ms glide animation ke baad node ko DOM se delete karega
+            }
+
+            // Wallet text ko input layer par short karke set karein
+            const addrDisplay = document.getElementById('user-address');
+            if (addrDisplay && walletAddress) {
+                addrDisplay.innerText = walletAddress.substring(0,6) + "..." + walletAddress.substring(walletAddress.length - 4);
+            }
+
+            // Pura balance input calculations active karein
+            const initialUsdt = document.getElementById('buy-usdt-amount').value;
+            calculateTokensReceived(initialUsdt);
+        }
+
+        // 2. Token Live dynamic calculator module logic
+        async function calculateTokensReceived(usdtVal) {
+            const mtaField = document.getElementById('received-mta-tokens');
+            const rateDisplay = document.getElementById('node-rate-display');
+            
+            try {
+                // web3-handler.js ke live rates dynamic metrics trigger karein
+                const rate = await getLiveRate(); 
+                
+                if (rateDisplay) {
+                    rateDisplay.innerText = parseFloat(rate).toFixed(2) + " USDT";
+                }
+                
+                if (mtaField && usdtVal > 0) {
+                    // Calculation: Pay (USDT) / Rate = Tokens (MTA)
+                    mtaField.value = (parseFloat(usdtVal) / rate).toFixed(2);
+                } else if (mtaField) {
+                    mtaField.value = "0.00";
+                }
+            } catch (err) {
+                console.log("Waiting for global contract state connection...");
+            }
+        }
+
+        // 3. Global synchronization connector (Jo components.js ke session variables ke saath match karega)
+        function triggerGlobalWalletConnect() {
+            // Agar components.js me connectWallet() function hai toh use run karega
+            if (typeof connectWallet === "function") {
+                connectWallet();
+            } else if (typeof handleConnectWallet === "function") {
+                handleConnectWallet();
+            } else {
+                alert("Please click on the main 'Connect Wallet' button on top of the dashboard.");
+            }
+        }
+
+        // 4. Background state checker loop (components.js ke status ko live catch karne ke liye)
+        const checkWalletStateInterval = setInterval(() => {
+            // Hum safe verify check kar rahe hain ki window interface ya ethers layer inject hui ya nahi
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                const activeUserWallet = window.ethereum.selectedAddress;
+                initializeSwapUI(activeUserWallet);
+                clearInterval(checkWalletStateInterval);
+            }
+        }, 1000); // Har ek second me background refresh tracking checks trigger karega
     </script>
 </body>
 </html>
