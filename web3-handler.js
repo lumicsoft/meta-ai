@@ -114,6 +114,18 @@ async function syncPublicPhaseDataOnly() {
 
 // --- MODULE 1: BUY NOW TOKEN INTERFACE ---
 window.handleBuyToken = async function() {
+    // 1. Connection Check: Agar wallet connected nahi hai to pehle login process chalayein
+    if (!signer || !usdtContract) {
+        alert("Wallet connect nahi hai. Connecting now...");
+        await window.handleLogin();
+        
+        // Login ke baad verify karein ki connection hua ya nahi
+        if (!signer) {
+            alert("Connection cancel kar diya gaya.");
+            return;
+        }
+    }
+
     try {
         const inputAmount = document.getElementById('buy-usdt-amount').value;
         if (!inputAmount || parseFloat(inputAmount) < 100) {
@@ -121,10 +133,11 @@ window.handleBuyToken = async function() {
             return;
         }
 
-        // BSC USDT 18 decimals use karta hai, agar apka token 6 decimals hai to '6' likhein
+        // BSC USDT (BEP20) ke liye 18 decimals use karein
         const priceWei = ethers.utils.parseUnits(inputAmount.toString(), 18); 
         const userAddress = await signer.getAddress();
         
+        // Referrer handle karna
         let referrerAddress = document.getElementById('reg-referrer')?.value;
         if(!referrerAddress || !ethers.utils.isAddress(referrerAddress)) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -134,22 +147,24 @@ window.handleBuyToken = async function() {
         const btn = document.getElementById('buy-now-btn');
         if(btn) { btn.disabled = true; btn.innerText = "CHECKING ALLOWANCE..."; }
 
-        // --- FIXED APPROVAL LOGIC ---
-        // Pehle check karein kya approve ki zarurat hai
+        // --- APPROVAL LOGIC ---
         const currentAllowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
         
         if (currentAllowance.lt(priceWei)) {
-            btn.innerText = "APPROVING USDT...";
-            // MaxUint256 ki jagah exact amount ya safe high value use karein
+            if(btn) btn.innerText = "APPROVING USDT...";
+            // Approve transaction
             const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, priceWei);
             await approveTx.wait();
         }
         
-        btn.innerText = "SWAPPING ASSETS...";
+        if(btn) btn.innerText = "SWAPPING ASSETS...";
         
-        // Execute buyTokens
+        // --- EXECUTION ---
         const tx = await contract.buyTokens(referrerAddress, priceWei, { gasLimit: 500000 });
+        
+        if(btn) btn.innerText = "CONFIRMING...";
         alert("Transaction Broadcasted! Waiting for confirmation...");
+        
         await tx.wait();
         
         alert("Allocation successful!");
@@ -157,9 +172,20 @@ window.handleBuyToken = async function() {
         
     } catch (err) { 
         console.error("Swap Core Failure Log:", err);
-        // Error ko readable banayein
-        alert("Transaction Aborted: " + (err.data?.message || err.message));
-        if(document.getElementById('buy-now-btn')) document.getElementById('buy-now-btn').disabled = false;
+        
+        // User-friendly error messages
+        let errorMessage = err.data?.message || err.message;
+        if (errorMessage.includes("user rejected")) {
+            errorMessage = "User ne transaction reject kar di.";
+        }
+        
+        alert("Transaction Aborted: " + errorMessage);
+        
+        // Button reset karein
+        if(document.getElementById('buy-now-btn')) {
+            document.getElementById('buy-now-btn').disabled = false;
+            document.getElementById('buy-now-btn').innerText = "BUY NOW";
+        }
     }
 }
 
