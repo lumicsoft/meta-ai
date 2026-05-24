@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     `;
 
     // 4. Inject Premium Global Desktop Navbar (Meta AI Branding)
-    // Modified: Added 'hidden md:flex' on connect button section to clear mobile top alignment overlaps
     const navHTML = `
         <nav class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex justify-between items-center relative z-[100]">
             <div class="flex items-center gap-3 cursor-pointer group" onclick="location.href='index1.html'">
@@ -103,8 +102,87 @@ document.addEventListener("DOMContentLoaded", async function () {
     `;
     document.body.insertAdjacentHTML('beforeend', mobileNavHTML);
 
-    // 6. Footer
-    document.body.insertAdjacentHTML('beforeend', `<div id="footer-placeholder" class="w-full"></div>`);
+    // 6. Inject Premium Luxury Cyber Footer Component
+    const footerHTML = `
+        <footer class="w-full border-t border-white/[0.04] bg-[#020407] mt-16 relative overflow-hidden z-[10]">
+            <!-- Subtle Radial Bottom Glow Accent -->
+            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[280px] sm:w-[600px] h-[100px] bg-cyan-500/[0.03] rounded-full blur-[80px] pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto px-4 md:px-6 py-12 lg:py-16 grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 relative z-10">
+                
+                <!-- Column 1: Core Branding Matrix -->
+                <div class="md:col-span-4 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                            <i data-lucide="cpu" class="text-white w-5 h-5"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-md font-black tracking-tight text-white uppercase">META <span class="text-cyan-400">AI</span></span>
+                            <span class="text-[8px] text-slate-500 tracking-[0.2em] uppercase font-bold">Analytics Terminal</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed max-w-sm">
+                        Next-generation cryptographic token distribution layer. Yield allocation protocols monitored strictly on-chain via algorithmic infrastructure matrix loops.
+                    </p>
+                </div>
+
+                <!-- Column 2: Quick Architecture Links -->
+                <div class="md:col-span-2 space-y-3">
+                    <span class="text-[10px] font-bold tracking-widest text-slate-400 uppercase block">Navigation</span>
+                    <ul class="space-y-2 text-xs font-medium text-slate-500">
+                        <li><a href="index1.html" class="hover:text-cyan-400 transition-colors">Operational Node</a></li>
+                        <li><a href="index.html" class="hover:text-cyan-400 transition-colors">Direct Allocation</a></li>
+                        <li><a href="web.html" class="hover:text-cyan-400 transition-colors">Token Verification</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Security Clearances -->
+                <div class="md:col-span-3 space-y-3">
+                    <span class="text-[10px] font-bold tracking-widest text-slate-400 uppercase block">Security Layer</span>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                            <span>Smart Contract Audited</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                            <i data-lucide="lock" class="w-4 h-4 text-cyan-400 flex-shrink-0"></i>
+                            <span>Symmetric Asset Lock</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 4: Social Infrastructure Channels -->
+                <div class="md:col-span-3 space-y-3">
+                    <span class="text-[10px] font-bold tracking-widest text-slate-400 uppercase block">Global Broadcasts</span>
+                    <div class="flex items-center gap-3">
+                        <a href="#" class="w-8 h-8 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 flex items-center justify-center transition-all">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 flex items-center justify-center transition-all">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 rounded-lg bg-white/[0.02] border border-white/[0.05] hover:border-cyan-500/30 text-slate-400 hover:text-cyan-400 flex items-center justify-center transition-all">
+                            <i data-lucide="globe" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Sub-Copyright Deck -->
+            <div class="w-full border-t border-white/[0.02] py-6 text-center text-[10px] font-mono text-slate-600 tracking-wider">
+                &copy; 2026 META AI LABS. ALL CRYPTOGRAPHIC RIGHTS SECURED DIRECT.
+            </div>
+        </footer>
+    `;
+
+    // Safe DOM injection mapping script
+    const footerPlaceholder = document.getElementById('footer-placeholder');
+    if (footerPlaceholder) {
+        footerPlaceholder.outerHTML = footerHTML;
+    } else {
+        document.body.insertAdjacentHTML('beforeend', footerHTML);
+    }
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
     document.dispatchEvent(new CustomEvent('componentsLoaded'));
