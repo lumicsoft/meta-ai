@@ -415,106 +415,47 @@ async function renderLiveEventHistoryLedger(userAddress) {
     if (!historyRows) return;
 
     try {
-        let compiledStatements = [];
+        // Direct storage call - Zero timeout, zero RPC crash risk
+        const logs = await contract.getUserHistoryLogs(userAddress);
         
-        // Optimizing Range: 20000 blocks se chhota karke latest 5000 blocks kiya taaki public rpc load handle kar sake
-        const blockRangeToScan = -5000; 
-
-        // 1. Scan Filter: Purchases
-        try {
-            const purchaseFilter = contract.filters.TokenPurchased(userAddress);
-            const purchaseEvents = await contract.queryFilter(purchaseFilter, blockRangeToScan);
-            purchaseEvents.forEach(ev => {
-                compiledStatements.push({
-                    txHash: ev.transactionHash,
-                    type: "BUY",
-                    usdt: ethers.utils.formatEther(ev.args.usdtAmount),
-                    mta: ethers.utils.formatEther(ev.args.tokenAmount),
-                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
-                });
-            });
-        } catch (e) { console.warn("Purchase log optimization skipped:", e); }
-
-        // 2. Scan Filter: Direct Rewards
-        try {
-            const directFilter = contract.filters.DirectRewardDistributed(userAddress);
-            const directEvents = await contract.queryFilter(directFilter, blockRangeToScan);
-            directEvents.forEach(ev => {
-                compiledStatements.push({
-                    txHash: ev.transactionHash,
-                    type: "DIRECT INC",
-                    usdt: "—",
-                    mta: ethers.utils.formatEther(ev.args.amount),
-                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
-                });
-            });
-        } catch (e) { console.warn("Direct rewards log skipped:", e); }
-
-        // 3. Scan Filter: Differential MLM Rewards
-        try {
-            const diffFilter = contract.filters.DifferentialRewardDistributed(userAddress);
-            const diffEvents = await contract.queryFilter(diffFilter, blockRangeToScan);
-            diffEvents.forEach(ev => {
-                compiledStatements.push({
-                    txHash: ev.transactionHash,
-                    type: `MLM S${ev.args.rank ? ev.args.rank.toString() : '1'} INC`,
-                    usdt: "—",
-                    mta: ethers.utils.formatEther(ev.args.amount),
-                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
-                });
-            });
-        } catch (e) { console.warn("MLM query step skipped:", e); }
-
-        // 4. Scan Filter: Withdraw History
-        try {
-            const withdrawFilter = contract.filters.TokensWithdrawn(userAddress);
-            const withdrawEvents = await contract.queryFilter(withdrawFilter, blockRangeToScan);
-            withdrawEvents.forEach(ev => {
-                compiledStatements.push({
-                    txHash: ev.transactionHash,
-                    type: "WITHDRAW",
-                    usdt: "—",
-                    mta: ethers.utils.formatEther(ev.args.amount),
-                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
-                });
-            });
-        } catch (e) { console.warn("Withdraw log step skipped:", e); }
-
-        // Sorting
-        compiledStatements.sort((a, b) => b.timestamp - a.timestamp);
-
-        if (compiledStatements.length === 0) {
-            historyRows.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500 font-sans">No network ledger statements found in active blocks.</td></tr>`;
+        if (logs.length === 0) {
+            historyRows.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500 font-sans">No network ledger statements found.</td></tr>`;
             return;
         }
 
-        historyRows.innerHTML = ""; 
+        historyRows.innerHTML = "";
         
-        compiledStatements.forEach(tx => {
-            const dateStr = new Date(tx.timestamp * 1000).toLocaleString();
-            const shortHash = tx.txHash.substring(0, 6) + "..." + tx.txHash.substring(tx.txHash.length - 4);
+        // Reverse array to show latest first (Luxury sort)
+        for (let i = logs.length - 1; i >= 0; i--) {
+            const log = logs[i];
+            const dateStr = new Date(log.timestamp.toNumber() * 1000).toLocaleString();
             
-            let badgeStyle = "bg-cyan-500/10 text-cyan-400"; 
-            if (tx.type.includes("INC")) badgeStyle = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
-            if (tx.type === "WITHDRAW") badgeStyle = "bg-red-500/10 text-red-400 border border-red-500/10";
+            let badgeStyle = "bg-cyan-500/10 text-cyan-400";
+            let displayType = log.logType;
+            
+            if (log.logType.includes("INC")) {
+                badgeStyle = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
+                displayType = log.logType === "DIRECT_INC" ? "DIRECT INC" : "MLM INC";
+            }
+            if (log.logType === "WITHDRAW") badgeStyle = "bg-red-500/10 text-red-400 border border-red-500/10";
+            if (log.logType === "LIQUIDATE") badgeStyle = "bg-orange-500/10 text-orange-400 border border-orange-500/10";
 
-            const usdtFormatted = tx.usdt !== "—" ? `${parseFloat(tx.usdt).toFixed(2)} USDT` : "—";
-            const mtaFormatted = `${parseFloat(tx.mta).toFixed(2)} MTA`;
+            const usdtFormatted = log.usdtAmount.gt(0) ? `${parseFloat(ethers.utils.formatEther(log.usdtAmount)).toFixed(2)} USDT` : "—";
+            const mtaFormatted = `${parseFloat(ethers.utils.formatEther(log.tokenAmount)).toFixed(2)} MTA`;
 
             historyRows.innerHTML += `
                 <tr class="border-b border-white/[0.02] hover:bg-white/[0.01] transition-colors">
-                    <td class="py-3.5 pl-2 text-blue-400 select-all font-mono">${shortHash}</td>
-                    <td class="py-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeStyle}">${tx.type}</span></td>
+                    <td class="py-3.5 pl-2 text-blue-400 select-all font-mono">#0000${i}</td>
+                    <td class="py-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeStyle}">${displayType}</span></td>
                     <td class="py-3.5 text-slate-400">${usdtFormatted}</td>
-                    <td class="py-3.5 font-bold ${tx.type === 'WITHDRAW' ? 'text-red-400' : 'text-cyan-400'}">${mtaFormatted}</td>
+                    <td class="py-3.5 font-bold ${log.logType === 'WITHDRAW' ? 'text-red-400' : 'text-cyan-400'}">${mtaFormatted}</td>
                     <td class="py-3.5 pr-2 text-right text-slate-500 font-sans">${dateStr}</td>
                 </tr>
             `;
-        });
-
+        }
     } catch (e) {
         console.error("Ledger rendering failed:", e);
-        historyRows.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-red-400">Failed to sync blockchain data logs.</td></tr>`;
+        historyRows.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-red-400">Failed to load system log array.</td></tr>`;
     }
 }
 // --- DYNAMIC STANDALONE RANK MILESTONE CALCULATOR DOM ENGINE ---
