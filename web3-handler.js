@@ -28,7 +28,7 @@ const CONTRACT_ABI = [
     "function getUserPurchaseDetails(address _userAddress) external view returns (uint256 totalUsdtInvested, uint256 totalMtaTokensBought, uint256 unreleasedVestedTokens, uint256 readyToReleaseVestedTokens, uint256 totalVestedTokensReleased)",
     "function getUserRewardDetails(address _userAddress) external view returns (uint256 totalDirectRewardsEarned, uint256 totalDifferentialRewardsEarned, uint256 pendingUnclaimedRewards, uint256 totalRewardsWithdrawnHistory)",
     "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)",
-    
+    "function getUserHistoryLogs(address _userAddress) external view returns (tuple(string logType, uint256 usdtAmount, uint256 tokenAmount, uint256 timestamp)[])",
     // --- Transaction History Events ABI Mappings ---
     "event TokenPurchased(address indexed buyer, uint256 usdtAmount, uint256 tokenAmount, uint256 phaseId, uint256 timestamp)",
     "event DirectRewardDistributed(address indexed referrer, address indexed buyer, uint256 amount, uint256 timestamp)",
