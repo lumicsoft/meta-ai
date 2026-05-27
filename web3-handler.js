@@ -144,8 +144,8 @@ window.handleBuyToken = async function() {
 
     try {
         const inputAmount = document.getElementById('buy-usdt-amount').value;
-        if (!inputAmount || parseFloat(inputAmount) < 100) {
-            alert("Security Protocol Boundary: Minimum capital threshold is $100 USDT.");
+        if (!inputAmount || parseFloat(inputAmount) < 1) {
+            alert("Security Protocol Boundary: Minimum capital threshold is $1 USDT.");
             return;
         }
 
