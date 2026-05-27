@@ -116,12 +116,12 @@
                     <div class="w-9 h-9 rounded-xl bg-slate-950 border border-white/[0.04] flex items-center justify-center text-slate-400"><i data-lucide="database" class="w-4 h-4"></i></div>
                 </div>
 
-                <!-- CARD: DAILY RELEASE MTA -->
+                <!-- CARD: DAILY RELEASE MTA (UNLOCKED YIELD) -->
                 <div class="luxury-node-card p-5 rounded-2xl flex items-center justify-between border-b border-b-cyan-500/30">
                     <div class="space-y-1">
                         <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block">Claimable Unlocked Yield</span>
                         <h4 id="daily-release-mta" class="text-2xl font-black font-mono text-cyan-400">0.00 MTA</h4>
-                        <span class="text-[10px] text-slate-400 block">Current factor: <span class="text-slate-200 font-bold">1% / 24h</span></span>
+                        <span class="text-[10px] text-slate-500 block">Auto-combines into console below</span>
                     </div>
                     <div class="w-9 h-9 rounded-xl bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center text-cyan-400 shadow-inner"><i data-lucide="zap" class="w-4 h-4"></i></div>
                 </div>
@@ -139,21 +139,36 @@
         </section>
 
         <!-- ================= ACTION CONSOLE: DIRECT WITHDRAW & SWAP TERMINAL ================= -->
-        <section class="luxury-node-card rounded-3xl p-5 shadow-xl bg-gradient-to-br from-[#0c1322] to-[#04070e]">
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-                <div class="space-y-1">
+        <section class="luxury-node-card rounded-3xl p-6 shadow-xl bg-gradient-to-br from-[#0c1322] to-[#04070e] border border-cyan-500/20">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                
+                <!-- Left Details Stack -->
+                <div class="space-y-2 max-w-xl">
                     <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
                         <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i> Liquidation Action Vault Console
                     </h3>
-                    <p class="text-[10px] text-slate-500 font-mono">Available Claimable Node Pool Rewards Ledger Balance: <span id="available-balance" class="text-cyan-400 font-bold font-mono">0.00</span> MTA</p>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Yahan aapka <span class="text-cyan-400 font-bold">1% Daily Unlocked Yield</span> aur aapka total <span class="text-purple-400 font-bold">MLM Referral/Rank Income</span> dono ek sath auto-merge hokar instant claim ke liye load hote hain.
+                    </p>
+                </div>
+
+                <!-- Center Large Balance Block (💥 UPDATED: BIG SIZE DISP) -->
+                <div class="bg-black/40 px-6 py-4 rounded-2xl border border-white/[0.03] min-w-[260px] text-center lg:text-left">
+                    <span class="text-[9px] text-slate-500 font-bold uppercase tracking-widest block mb-1">Total Available Pool Balance</span>
+                    <div class="flex items-baseline justify-center lg:justify-start gap-2">
+                        <span id="available-balance" class="text-4xl font-black orbitron text-cyan-400 tracking-tight drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]">0.00</span>
+                        <span class="text-sm font-black text-cyan-500 orbitron">MTA</span>
+                    </div>
+                    <span class="text-[9px] text-slate-500 font-mono block mt-1">Includes Vested Yield + Network Rewards</span>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3 w-full md:w-auto md:min-w-[340px]">
-                    <button onclick="handleWithdrawAvailable()" class="bg-slate-950 border border-white/[0.06] hover:border-white/20 px-5 h-12 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-200 uppercase tracking-wider shadow-inner">
-                        <i data-lucide="download-cloud" class="w-3.5 h-3.5 text-slate-400"></i> Withdraw Token
+                <!-- Right Action Action Elements Stack -->
+                <div class="grid grid-cols-2 gap-3 w-full lg:w-auto lg:min-w-[340px]">
+                    <button onclick="handleWithdrawAvailable()" class="bg-slate-950 border border-white/[0.06] hover:border-white/20 px-5 h-14 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-slate-200 uppercase tracking-wider shadow-inner">
+                        <i data-lucide="download-cloud" class="w-4 h-4 text-slate-400"></i> Withdraw Token
                     </button>
-                    <button onclick="handleSwapAndBurn()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-white px-5 h-12 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 uppercase tracking-wider">
-                        <i data-lucide="zap" class="w-3.5 h-3.5"></i> Swap & Burn
+                    <button onclick="handleSwapAndBurn()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-95 text-white px-5 h-14 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/10 uppercase tracking-wider">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Swap & Burn
                     </button>
                 </div>
             </div>
