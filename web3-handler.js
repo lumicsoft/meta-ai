@@ -27,7 +27,13 @@ const CONTRACT_ABI = [
     // --- Mapped Tuple Views ---
     "function getUserPurchaseDetails(address _userAddress) external view returns (uint256 totalUsdtInvested, uint256 totalMtaTokensBought, uint256 unreleasedVestedTokens, uint256 readyToReleaseVestedTokens, uint256 totalVestedTokensReleased)",
     "function getUserRewardDetails(address _userAddress) external view returns (uint256 totalDirectRewardsEarned, uint256 totalDifferentialRewardsEarned, uint256 pendingUnclaimedRewards, uint256 totalRewardsWithdrawnHistory)",
-    "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)"
+    "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)",
+    
+    // --- Transaction History Events ABI Mappings ---
+    "event TokenPurchased(address indexed buyer, uint256 usdtAmount, uint256 tokenAmount, uint256 phaseId, uint256 timestamp)",
+    "event DirectRewardDistributed(address indexed referrer, address indexed buyer, uint256 amount, uint256 timestamp)",
+    "event DifferentialRewardDistributed(address indexed referrer, address indexed buyer, uint256 amount, uint256 rank, uint256 timestamp)",
+    "event TokensWithdrawn(address indexed user, uint256 amount, uint256 timestamp)"
 ];
 
 const USDT_ABI = [
@@ -275,7 +281,6 @@ window.handleLogin = async function() {
         usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
         localStorage.removeItem('manualLogout');
         
-        // 🎯 CRITICAL FIX REMOVED: Pehle jo yahan check laga tha jo purane user ko seedhe index1.html par fenk deta tha, use permanently uda diya hai.
         // Ab login/connect par koi restriction nahi hogi, user direct isi buy section application panel par setup hoga.
         await setupApp(userAddress);
         
@@ -397,8 +402,110 @@ async function fetchAllSplitDataMetrics(address) {
         const activeRankCode = networkTuple.currentRankCode.toNumber();
         updateRankMilestoneTopologyDOM(activeRankCode, networkTuple);
 
+        // 🚀 LIVE INJECT TRANSACTION HISTORY BLOCK SCANNER CHANNELS
+        await renderLiveEventHistoryLedger(address);
+
     } catch (error) {
         console.error("Dashboard batch synchronization trace terminated:", error);
+    }
+}
+
+// --- 🌐 NEW EVENT HISTORY SCANNER INFRASTRUCTURE ---
+async function renderLiveEventHistoryLedger(userAddress) {
+    const historyRows = document.getElementById('income-history-rows');
+    if (!historyRows) return;
+
+    try {
+        let compiledStatements = [];
+
+        // 1. Scan Filter: Purchases (TokenPurchased)
+        const purchaseFilter = contract.filters.TokenPurchased(userAddress);
+        const purchaseEvents = await contract.queryFilter(purchaseFilter, -20000); // Last 20k Blocks Scan
+        purchaseEvents.forEach(ev => {
+            compiledStatements.push({
+                txHash: ev.transactionHash,
+                type: "BUY",
+                usdt: ethers.utils.formatEther(ev.args.usdtAmount),
+                mta: ethers.utils.formatEther(ev.args.tokenAmount),
+                timestamp: ev.args.timestamp.toNumber()
+            });
+        });
+
+        // 2. Scan Filter: Direct Rewards (DirectRewardDistributed)
+        const directFilter = contract.filters.DirectRewardDistributed(userAddress);
+        const directEvents = await contract.queryFilter(directFilter, -20000);
+        directEvents.forEach(ev => {
+            compiledStatements.push({
+                txHash: ev.transactionHash,
+                type: "DIRECT INC",
+                usdt: "—",
+                mta: ethers.utils.formatEther(ev.args.amount),
+                timestamp: ev.args.timestamp.toNumber()
+            });
+        });
+
+        // 3. Scan Filter: Differential MLM Rewards (DifferentialRewardDistributed)
+        const diffFilter = contract.filters.DifferentialRewardDistributed(userAddress);
+        const diffEvents = await contract.queryFilter(diffFilter, -20000);
+        diffEvents.forEach(ev => {
+            compiledStatements.push({
+                txHash: ev.transactionHash,
+                type: `MLM S${ev.args.rank.toString()} INC`,
+                usdt: "—",
+                mta: ethers.utils.formatEther(ev.args.amount),
+                timestamp: ev.args.timestamp.toNumber()
+            });
+        });
+
+        // 4. Scan Filter: Withdraw History (TokensWithdrawn)
+        const withdrawFilter = contract.filters.TokensWithdrawn(userAddress);
+        const withdrawEvents = await contract.queryFilter(withdrawFilter, -20000);
+        withdrawEvents.forEach(ev => {
+            compiledStatements.push({
+                txHash: ev.transactionHash,
+                type: "WITHDRAW",
+                usdt: "—",
+                mta: ethers.utils.formatEther(ev.args.amount),
+                timestamp: ev.args.timestamp.toNumber()
+            });
+        });
+
+        // Sorting Compiled Statements by Chronological Order (Latest First)
+        compiledStatements.sort((a, b) => b.timestamp - a.timestamp);
+
+        if (compiledStatements.length === 0) {
+            historyRows.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500 font-sans">No network ledger statements found.</td></tr>`;
+            return;
+        }
+
+        historyRows.innerHTML = ""; // Clear loader state
+        
+        // Loop and render final rows
+        compiledStatements.forEach(tx => {
+            const dateStr = new Date(tx.timestamp * 1000).toLocaleString();
+            const shortHash = tx.txHash.substring(0, 6) + "..." + tx.txHash.substring(tx.txHash.length - 4);
+            
+            let badgeStyle = "bg-cyan-500/10 text-cyan-400"; // Default Buy
+            if (tx.type.includes("INC")) badgeStyle = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
+            if (tx.type === "WITHDRAW") badgeStyle = "bg-red-500/10 text-red-400 border border-red-500/10";
+
+            const usdtFormatted = tx.usdt !== "—" ? `${parseFloat(tx.usdt).toFixed(2)} USDT` : "—";
+            const mtaFormatted = `${parseFloat(tx.mta).toFixed(2)} MTA`;
+
+            historyRows.innerHTML += `
+                <tr class="border-b border-white/[0.02] hover:bg-white/[0.01] transition-colors">
+                    <td class="py-3.5 pl-2 text-blue-400 select-all font-mono">${shortHash}</td>
+                    <td class="py-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeStyle}">${tx.type}</span></td>
+                    <td class="py-3.5 text-slate-400">${usdtFormatted}</td>
+                    <td class="py-3.5 font-bold ${tx.type === 'WITHDRAW' ? 'text-red-400' : 'text-cyan-400'}">${mtaFormatted}</td>
+                    <td class="py-3.5 pr-2 text-right text-slate-500 font-sans">${dateStr}</td>
+                </tr>
+            `;
+        });
+
+    } catch (e) {
+        console.error("Ledger rendering failed:", e);
+        historyRows.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-red-400">Failed to sync blockchain data logs.</td></tr>`;
     }
 }
 
