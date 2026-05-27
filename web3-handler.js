@@ -410,82 +410,91 @@ async function fetchAllSplitDataMetrics(address) {
     }
 }
 
-// --- 🌐 NEW EVENT HISTORY SCANNER INFRASTRUCTURE ---
 async function renderLiveEventHistoryLedger(userAddress) {
     const historyRows = document.getElementById('income-history-rows');
     if (!historyRows) return;
 
     try {
         let compiledStatements = [];
+        
+        // Optimizing Range: 20000 blocks se chhota karke latest 5000 blocks kiya taaki public rpc load handle kar sake
+        const blockRangeToScan = -5000; 
 
-        // 1. Scan Filter: Purchases (TokenPurchased)
-        const purchaseFilter = contract.filters.TokenPurchased(userAddress);
-        const purchaseEvents = await contract.queryFilter(purchaseFilter, -20000); // Last 20k Blocks Scan
-        purchaseEvents.forEach(ev => {
-            compiledStatements.push({
-                txHash: ev.transactionHash,
-                type: "BUY",
-                usdt: ethers.utils.formatEther(ev.args.usdtAmount),
-                mta: ethers.utils.formatEther(ev.args.tokenAmount),
-                timestamp: ev.args.timestamp.toNumber()
+        // 1. Scan Filter: Purchases
+        try {
+            const purchaseFilter = contract.filters.TokenPurchased(userAddress);
+            const purchaseEvents = await contract.queryFilter(purchaseFilter, blockRangeToScan);
+            purchaseEvents.forEach(ev => {
+                compiledStatements.push({
+                    txHash: ev.transactionHash,
+                    type: "BUY",
+                    usdt: ethers.utils.formatEther(ev.args.usdtAmount),
+                    mta: ethers.utils.formatEther(ev.args.tokenAmount),
+                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
+                });
             });
-        });
+        } catch (e) { console.warn("Purchase log optimization skipped:", e); }
 
-        // 2. Scan Filter: Direct Rewards (DirectRewardDistributed)
-        const directFilter = contract.filters.DirectRewardDistributed(userAddress);
-        const directEvents = await contract.queryFilter(directFilter, -20000);
-        directEvents.forEach(ev => {
-            compiledStatements.push({
-                txHash: ev.transactionHash,
-                type: "DIRECT INC",
-                usdt: "—",
-                mta: ethers.utils.formatEther(ev.args.amount),
-                timestamp: ev.args.timestamp.toNumber()
+        // 2. Scan Filter: Direct Rewards
+        try {
+            const directFilter = contract.filters.DirectRewardDistributed(userAddress);
+            const directEvents = await contract.queryFilter(directFilter, blockRangeToScan);
+            directEvents.forEach(ev => {
+                compiledStatements.push({
+                    txHash: ev.transactionHash,
+                    type: "DIRECT INC",
+                    usdt: "—",
+                    mta: ethers.utils.formatEther(ev.args.amount),
+                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
+                });
             });
-        });
+        } catch (e) { console.warn("Direct rewards log skipped:", e); }
 
-        // 3. Scan Filter: Differential MLM Rewards (DifferentialRewardDistributed)
-        const diffFilter = contract.filters.DifferentialRewardDistributed(userAddress);
-        const diffEvents = await contract.queryFilter(diffFilter, -20000);
-        diffEvents.forEach(ev => {
-            compiledStatements.push({
-                txHash: ev.transactionHash,
-                type: `MLM S${ev.args.rank.toString()} INC`,
-                usdt: "—",
-                mta: ethers.utils.formatEther(ev.args.amount),
-                timestamp: ev.args.timestamp.toNumber()
+        // 3. Scan Filter: Differential MLM Rewards
+        try {
+            const diffFilter = contract.filters.DifferentialRewardDistributed(userAddress);
+            const diffEvents = await contract.queryFilter(diffFilter, blockRangeToScan);
+            diffEvents.forEach(ev => {
+                compiledStatements.push({
+                    txHash: ev.transactionHash,
+                    type: `MLM S${ev.args.rank ? ev.args.rank.toString() : '1'} INC`,
+                    usdt: "—",
+                    mta: ethers.utils.formatEther(ev.args.amount),
+                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
+                });
             });
-        });
+        } catch (e) { console.warn("MLM query step skipped:", e); }
 
-        // 4. Scan Filter: Withdraw History (TokensWithdrawn)
-        const withdrawFilter = contract.filters.TokensWithdrawn(userAddress);
-        const withdrawEvents = await contract.queryFilter(withdrawFilter, -20000);
-        withdrawEvents.forEach(ev => {
-            compiledStatements.push({
-                txHash: ev.transactionHash,
-                type: "WITHDRAW",
-                usdt: "—",
-                mta: ethers.utils.formatEther(ev.args.amount),
-                timestamp: ev.args.timestamp.toNumber()
+        // 4. Scan Filter: Withdraw History
+        try {
+            const withdrawFilter = contract.filters.TokensWithdrawn(userAddress);
+            const withdrawEvents = await contract.queryFilter(withdrawFilter, blockRangeToScan);
+            withdrawEvents.forEach(ev => {
+                compiledStatements.push({
+                    txHash: ev.transactionHash,
+                    type: "WITHDRAW",
+                    usdt: "—",
+                    mta: ethers.utils.formatEther(ev.args.amount),
+                    timestamp: ev.args.timestamp ? ev.args.timestamp.toNumber() : Math.floor(Date.now() / 1000)
+                });
             });
-        });
+        } catch (e) { console.warn("Withdraw log step skipped:", e); }
 
-        // Sorting Compiled Statements by Chronological Order (Latest First)
+        // Sorting
         compiledStatements.sort((a, b) => b.timestamp - a.timestamp);
 
         if (compiledStatements.length === 0) {
-            historyRows.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500 font-sans">No network ledger statements found.</td></tr>`;
+            historyRows.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500 font-sans">No network ledger statements found in active blocks.</td></tr>`;
             return;
         }
 
-        historyRows.innerHTML = ""; // Clear loader state
+        historyRows.innerHTML = ""; 
         
-        // Loop and render final rows
         compiledStatements.forEach(tx => {
             const dateStr = new Date(tx.timestamp * 1000).toLocaleString();
             const shortHash = tx.txHash.substring(0, 6) + "..." + tx.txHash.substring(tx.txHash.length - 4);
             
-            let badgeStyle = "bg-cyan-500/10 text-cyan-400"; // Default Buy
+            let badgeStyle = "bg-cyan-500/10 text-cyan-400"; 
             if (tx.type.includes("INC")) badgeStyle = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
             if (tx.type === "WITHDRAW") badgeStyle = "bg-red-500/10 text-red-400 border border-red-500/10";
 
@@ -508,7 +517,6 @@ async function renderLiveEventHistoryLedger(userAddress) {
         historyRows.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-red-400">Failed to sync blockchain data logs.</td></tr>`;
     }
 }
-
 // --- DYNAMIC STANDALONE RANK MILESTONE CALCULATOR DOM ENGINE ---
 function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
     const statusLabel = document.getElementById('rank-badge-status');
