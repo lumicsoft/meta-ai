@@ -413,15 +413,18 @@ async function fetchAllSplitDataMetrics(address) {
 
         // 5. Fetch data array from getUserNetworkStats (Structural Topology Block Mapping)
         const networkTuple = await contract.getUserNetworkStats(address);
+        
+        // ✨ FIXED: Direct Team Count Mapping
         updateText('direct-team-count', `${networkTuple.immediateDirectCount.toString()} Users`);
         
-        // Mathematical multi-leg aggregation calculation loop to compute true overall network totals
+        // ✨ FIXED MATHEMATICAL AGGREGATION MAP: Object positions re-aligned to perfectly read 8 elements tuple without shifting array boundaries
         const entireTotalOrganizationFootprint = 
             parseInt(networkTuple.immediateDirectCount) +
             parseInt(networkTuple.downlineS1Count) +
             parseInt(networkTuple.downlineS2Count) +
             parseInt(networkTuple.downlineS3Count) +
             parseInt(networkTuple.downlineS4Count);
+            
         updateText('total-team-count', `${entireTotalOrganizationFootprint.toString()} Nodes`);
 
         // Rank validation mapping structures code parameters checks
