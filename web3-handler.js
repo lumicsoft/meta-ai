@@ -26,12 +26,13 @@ const CONTRACT_ABI = [
     "function checkClaimableTokens(address _user) public view returns (uint256)",
     "function presalePhases(uint256) external view returns (uint256 price, uint256 maxSupply, uint256 sold, uint256 duration, uint256 startTime)",
     "function userPhaseInvestment(address, uint256) external view returns (uint256)", 
+    "function users(address) external view returns (address referrer, uint256 rank, uint256 directCount, uint256 validDirectsCount, uint256 totalUsdtSpent, uint256 totalBoughtTokens, uint256 claimedTokens, uint256 lastClaimTimestamp, uint256 totalDirectRewardEarned, uint256 totalDifferentialRewardEarned, uint256 rewardBalance, uint256 totalRewardsWithdrawn)",
     
     // --- Mapped Tuple Views ---
     "function getUserPurchaseDetails(address _userAddress) external view returns (uint256 totalUsdtInvested, uint256 totalMtaTokensBought, uint256 unreleasedVestedTokens, uint256 readyToReleaseVestedTokens, uint256 totalVestedTokensReleased)",
     "function getUserRewardDetails(address _userAddress) external view returns (uint256 totalDirectRewardsEarned, uint256 totalDifferentialRewardsEarned, uint256 pendingUnclaimedRewards, uint256 totalRewardsWithdrawnHistory)",
-    // 🛠️ CRITICAL FIXED NODE: Added 'uint256 validDirectsCount' inside the array mapping to sync layout metrics seamlessly
-    "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 validDirectsCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)",
+    // 🛠️ EXACT MATCH WITH CONTRACT STRUCT: 7 return parameters mapped from contract function
+    "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)",
     "function getUserHistoryLogs(address _userAddress) external view returns (tuple(string logType, uint256 usdtAmount, uint256 tokenAmount, uint256 timestamp)[])",
     
     // --- Transaction History Events ABI Mappings ---
@@ -402,11 +403,9 @@ async function fetchAllSplitDataMetrics(address) {
         updateText('total-purchased-mta', parseFloat(ethers.utils.formatEther(purchasesTuple.totalMtaTokensBought)).toFixed(2));
         updateText('total-released-mta', parseFloat(ethers.utils.formatEther(purchasesTuple.totalVestedTokensReleased)).toFixed(2));
 
-        // 3. Fetch data calculation from checkClaimableTokens view (Daily Release Block Mapping)
         const liveDailyReleaseClaimable = await contract.checkClaimableTokens(address);
         updateText('daily-release-mta', parseFloat(ethers.utils.formatEther(liveDailyReleaseClaimable)).toFixed(2));
 
-        // 4. Fetch data array from getUserRewardDetails (Monetary Yield Block Mapping)
         const rewardsTuple = await contract.getUserRewardDetails(address);
         updateText('direct-income-vault', parseFloat(ethers.utils.formatEther(rewardsTuple.totalDirectRewardsEarned)).toFixed(2));
         updateText('rank-income-vault', parseFloat(ethers.utils.formatEther(rewardsTuple.totalDifferentialRewardsEarned)).toFixed(2));
@@ -415,12 +414,12 @@ async function fetchAllSplitDataMetrics(address) {
         // 5. Fetch data array from getUserNetworkStats (Structural Topology Block Mapping)
         const networkTuple = await contract.getUserNetworkStats(address);
         
-        // 🛠️ DUAL-MODE PARSING SHIELD: Named property support + Array Index Fallback for Ethers v5 compatibility
+        // 🛠️ COOPERATIVE CORRECTION LOGIC: Exact 7 elements structural extraction matching your Solidity contract indices
         const directCount = networkTuple.immediateDirectCount ? networkTuple.immediateDirectCount.toString() : (networkTuple[2] ? networkTuple[2].toString() : "0");
-        const downlineS1 = networkTuple.downlineS1Count ? networkTuple.downlineS1Count.toString() : (networkTuple[4] ? networkTuple[4].toString() : "0");
-        const downlineS2 = networkTuple.downlineS2Count ? networkTuple.downlineS2Count.toString() : (networkTuple[5] ? networkTuple[5].toString() : "0");
-        const downlineS3 = networkTuple.downlineS3Count ? networkTuple.downlineS3Count.toString() : (networkTuple[6] ? networkTuple[6].toString() : "0");
-        const downlineS4 = networkTuple.downlineS4Count ? networkTuple.downlineS4Count.toString() : (networkTuple[7] ? networkTuple[7].toString() : "0");
+        const downlineS1 = networkTuple.downlineS1Count ? networkTuple.downlineS1Count.toString() : (networkTuple[3] ? networkTuple[3].toString() : "0");
+        const downlineS2 = networkTuple.downlineS2Count ? networkTuple.downlineS2Count.toString() : (networkTuple[4] ? networkTuple[4].toString() : "0");
+        const downlineS3 = networkTuple.downlineS3Count ? networkTuple.downlineS3Count.toString() : (networkTuple[5] ? networkTuple[5].toString() : "0");
+        const downlineS4 = networkTuple.downlineS4Count ? networkTuple.downlineS4Count.toString() : (networkTuple[6] ? networkTuple[6].toString() : "0");
 
         // Inject Dynamic Live Team Values Safely Into DOM Elements
         updateText('direct-team-count', `${directCount} Users`);
@@ -435,9 +434,12 @@ async function fetchAllSplitDataMetrics(address) {
             
         updateText('total-team-count', `${entireTotalOrganizationFootprint.toString()} Nodes`);
 
-        // Rank validation mapping structures code parameters checks
+        // 🛠️ FETCH validDirectsCount FROM PUBLIC USERS MAPPING SAFELY (Index 3)
+        const rawUserMapping = await contract.users(address);
+        const trueValidDirectsCount = rawUserMapping.validDirectsCount ? rawUserMapping.validDirectsCount.toString() : (rawUserMapping[3] ? rawUserMapping[3].toString() : "0");
+
         const activeRankCode = networkTuple.currentRankCode ? networkTuple.currentRankCode.toNumber() : (networkTuple[1] ? networkTuple[1].toNumber() : 0);
-        updateRankMilestoneTopologyDOM(activeRankCode, networkTuple);
+        updateRankMilestoneTopologyDOM(activeRankCode, networkTuple, trueValidDirectsCount);
 
         // 🚀 LIVE INJECT TRANSACTION HISTORY BLOCK SCANNER CHANNELS
         await renderLiveEventHistoryLedger(address);
@@ -497,7 +499,7 @@ async function renderLiveEventHistoryLedger(userAddress) {
 }
 
 // --- DYNAMIC STANDALONE RANK MILESTONE CALCULATOR DOM ENGINE ---
-function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
+function updateRankMilestoneTopologyDOM(rankIndex, networkTuple, trueValidDirectsCount) {
     const statusLabel = document.getElementById('rank-badge-status');
     const needLabel = document.getElementById('rank-qualification-need');
     const progressLabel = document.getElementById('current-qualification-status');
@@ -507,21 +509,20 @@ function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
     }
 
     if (needLabel && progressLabel) {
-        const validDirects = networkTuple.validDirectsCount ? networkTuple.validDirectsCount.toString() : (networkTuple[3] ? networkTuple[3].toString() : "0");
         if (rankIndex === 0) {
             // ✨ Upgraded S1 Target Rule Text matching smart contract criteria exactly
             needLabel.innerText = "Target Milestone S1: Requires $100 Self Deposit & 3 Direct referrals with min $100 total spent";
-            progressLabel.innerText = `Progress Vector: ${validDirects} / 3 Valid Directs ($100+) Active`;
+            progressLabel.innerText = `Progress Vector: ${trueValidDirectsCount} / 3 Valid Directs ($100+) Active`;
         } else if (rankIndex === 1) {
-            const s1Count = networkTuple.downlineS1Count ? networkTuple.downlineS1Count.toString() : (networkTuple[4] ? networkTuple[4].toString() : "0");
+            const s1Count = networkTuple.downlineS1Count ? networkTuple.downlineS1Count.toString() : (networkTuple[3] ? networkTuple[3].toString() : "0");
             needLabel.innerText = "Target Milestone S2: Requires 2 parallel lines to qualify S1 tier rank nodes";
             progressLabel.innerText = `Progress Vector: ${s1Count} / 2 Downline S1 Legs Active`;
         } else if (rankIndex === 2) {
-            const s2Count = networkTuple.downlineS2Count ? networkTuple.downlineS2Count.toString() : (networkTuple[5] ? networkTuple[5].toString() : "0");
+            const s2Count = networkTuple.downlineS2Count ? networkTuple.downlineS2Count.toString() : (networkTuple[4] ? networkTuple[4].toString() : "0");
             needLabel.innerText = "Target Milestone S3: Requires 2 parallel lines to qualify S2 tier rank nodes";
             progressLabel.innerText = `Progress Vector: ${s2Count} / 2 Downline S2 Legs Active`;
         } else if (rankIndex === 3) {
-            const s3Count = networkTuple.downlineS3Count ? networkTuple.downlineS3Count.toString() : (networkTuple[6] ? networkTuple[6].toString() : "0");
+            const s3Count = networkTuple.downlineS3Count ? networkTuple.downlineS3Count.toString() : (networkTuple[5] ? networkTuple[5].toString() : "0");
             needLabel.innerText = "Target Milestone S4: Requires 2 parallel lines to qualify S3 tier rank nodes";
             progressLabel.innerText = `Progress Vector: ${s3Count} / 2 Downline S3 Legs Active`;
         } else if (rankIndex >= 4) {
