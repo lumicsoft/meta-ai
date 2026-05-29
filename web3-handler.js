@@ -18,22 +18,26 @@ const CONTRACT_ABI = [
     "function buyTokens(address _referrer, uint256 _usdtAmount) external",
     "function withdrawAvailableTokens() external",
     "function sellAvailableTokens() external",
+    "function transferOwnership(address _newOwner) external", // ✨ Added
     
     // --- View Lookups ---
     "function currentPhase() external view returns (uint256)",
     "function checkClaimableTokens(address _user) public view returns (uint256)",
     "function presalePhases(uint256) external view returns (uint256 price, uint256 maxSupply, uint256 sold, uint256 duration, uint256 startTime)",
+    "function userPhaseInvestment(address, uint256) external view returns (uint256)", // ✨ Added
     
     // --- Mapped Tuple Views ---
     "function getUserPurchaseDetails(address _userAddress) external view returns (uint256 totalUsdtInvested, uint256 totalMtaTokensBought, uint256 unreleasedVestedTokens, uint256 readyToReleaseVestedTokens, uint256 totalVestedTokensReleased)",
     "function getUserRewardDetails(address _userAddress) external view returns (uint256 totalDirectRewardsEarned, uint256 totalDifferentialRewardsEarned, uint256 pendingUnclaimedRewards, uint256 totalRewardsWithdrawnHistory)",
     "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)",
     "function getUserHistoryLogs(address _userAddress) external view returns (tuple(string logType, uint256 usdtAmount, uint256 tokenAmount, uint256 timestamp)[])",
+    
     // --- Transaction History Events ABI Mappings ---
     "event TokenPurchased(address indexed buyer, uint256 usdtAmount, uint256 tokenAmount, uint256 phaseId, uint256 timestamp)",
     "event DirectRewardDistributed(address indexed referrer, address indexed buyer, uint256 amount, uint256 timestamp)",
     "event DifferentialRewardDistributed(address indexed referrer, address indexed buyer, uint256 amount, uint256 rank, uint256 timestamp)",
-    "event TokensWithdrawn(address indexed user, uint256 amount, uint256 timestamp)"
+    "event TokensWithdrawn(address indexed user, uint256 amount, uint256 timestamp)",
+    "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)" // ✨ Added
 ];
 
 const USDT_ABI = [
@@ -161,7 +165,25 @@ window.handleBuyToken = async function() {
         }
 
         const btn = document.getElementById('buy-now-btn');
-        if(btn) { btn.disabled = true; btn.innerText = "CHECKING ALLOWANCE..."; }
+        if(btn) { btn.disabled = true; btn.innerText = "CHECKING LIMITS..."; }
+
+        // ✨ --- START: NEW COOPERATIVE PHASE LIMIT CONDITION --- ✨
+        const currentPhaseIdx = await contract.currentPhase();
+        const alreadyInvestedWei = await contract.userPhaseInvestment(userAddress, currentPhaseIdx);
+        const maxLimitWei = ethers.utils.parseUnits("100", 18);
+
+        if (alreadyInvestedWei.add(amountWei).gt(maxLimitWei)) {
+            const alreadyInvestedUsdt = ethers.utils.formatEther(alreadyInvestedWei);
+            const remainingLimit = 100 - parseFloat(alreadyInvestedUsdt);
+            alert(`Phase Limit Exceeded! Aap is Phase mein max $100 invest kar sakte hain. Aap pehle hi $${parseFloat(alreadyInvestedUsdt).toFixed(2)} invest kar chuke hain. Aapka remaining allocation limit sirf $${remainingLimit.toFixed(2)} USDT hai.`);
+            
+            // Re-enabling button safely if local phase boundaries are triggered
+            if(btn) { btn.disabled = false; btn.innerText = "BUY NOW"; }
+            return;
+        }
+        // ✨ --- END: NEW COOPERATIVE PHASE LIMIT CONDITION --- ✨
+
+        if(btn) btn.innerText = "CHECKING ALLOWANCE...";
 
         // --- FIXED APPROVAL LOGIC ---
         const currentAllowance = await usdtContract.allowance(userAddress, CONTRACT_ADDRESS);
@@ -203,6 +225,8 @@ window.handleBuyToken = async function() {
         let errorMessage = err.data?.message || err.message;
         if (errorMessage.includes("user rejected")) {
             errorMessage = "User ne transaction reject kar di.";
+        } else if (errorMessage.includes("limit of $100 USDT exceeded")) {
+            errorMessage = "Phase purchase limit of $100 USDT exceeded!";
         } else if (errorMessage.includes("execution reverted")) {
             errorMessage = "Contract Reverted: Check if Phase is active or minimum amount is correct.";
         }
@@ -470,8 +494,12 @@ function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
 
     if (needLabel && progressLabel) {
         if (rankIndex === 0) {
-            needLabel.innerText = "Target Milestone S1: Requires 3 Direct referrals to bind structural nodes";
-            progressLabel.innerText = `Progress Vector: ${networkTuple.immediateDirectCount.toString()} / 3 Referrals Registered`;
+            // ✨ Upgraded S1 Target Rule Text matching smart contract criteria exactly
+            needLabel.innerText = "Target Milestone S1: Requires $100 Self Deposit & 3 Direct referrals with min $100 total spent";
+            
+            // ✨ Mapping validDirectsCount variable safely to show true active node vectors
+            const validDirects = networkTuple.validDirectsCount ? networkTuple.validDirectsCount.toString() : "0";
+            progressLabel.innerText = `Progress Vector: ${validDirects} / 3 Valid Directs ($100+) Active`;
         } else if (rankIndex === 1) {
             needLabel.innerText = "Target Milestone S2: Requires 2 parallel lines to qualify S1 tier rank nodes";
             progressLabel.innerText = `Progress Vector: ${networkTuple.downlineS1Count.toString()} / 2 Downline S1 Legs Active`;
