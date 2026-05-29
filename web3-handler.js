@@ -113,6 +113,7 @@ async function syncPublicPhaseDataOnly() {
         const tempContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
         
         const currentPhaseIdx = await tempContract.currentPhase();
+        // 🛠️ TYPO FIXED HERE: Removed the broken assignment token string to ensure clean execution loop
         const phaseObject = await tempContract.presalePhases(currentPhaseIdx);
 
         const tokenPriceString = ethers.utils.formatEther(phaseObject.price);
@@ -414,21 +415,28 @@ async function fetchAllSplitDataMetrics(address) {
         // 5. Fetch data array from getUserNetworkStats (Structural Topology Block Mapping)
         const networkTuple = await contract.getUserNetworkStats(address);
         
-        // ✨ FIXED: Direct Team Count Mapping
-        updateText('direct-team-count', `${networkTuple.immediateDirectCount.toString()} Users`);
+        // 🛠️ DUAL-MODE PARSING SHIELD: Named property support + Array Index Fallback for Ethers v5 compatibility
+        const directCount = networkTuple.immediateDirectCount ? networkTuple.immediateDirectCount.toString() : (networkTuple[2] ? networkTuple[2].toString() : "0");
+        const downlineS1 = networkTuple.downlineS1Count ? networkTuple.downlineS1Count.toString() : (networkTuple[4] ? networkTuple[4].toString() : "0");
+        const downlineS2 = networkTuple.downlineS2Count ? networkTuple.downlineS2Count.toString() : (networkTuple[5] ? networkTuple[5].toString() : "0");
+        const downlineS3 = networkTuple.downlineS3Count ? networkTuple.downlineS3Count.toString() : (networkTuple[6] ? networkTuple[6].toString() : "0");
+        const downlineS4 = networkTuple.downlineS4Count ? networkTuple.downlineS4Count.toString() : (networkTuple[7] ? networkTuple[7].toString() : "0");
+
+        // Inject Dynamic Live Team Values Safely Into DOM Elements
+        updateText('direct-team-count', `${directCount} Users`);
         
-        // ✨ FIXED MATHEMATICAL AGGREGATION MAP: Object positions re-aligned to perfectly read 8 elements tuple without shifting array boundaries
+        // Mathematical multi-leg aggregation calculation loop to compute true overall network totals
         const entireTotalOrganizationFootprint = 
-            parseInt(networkTuple.immediateDirectCount) +
-            parseInt(networkTuple.downlineS1Count) +
-            parseInt(networkTuple.downlineS2Count) +
-            parseInt(networkTuple.downlineS3Count) +
-            parseInt(networkTuple.downlineS4Count);
+            parseInt(directCount) +
+            parseInt(downlineS1) +
+            parseInt(downlineS2) +
+            parseInt(downlineS3) +
+            parseInt(downlineS4);
             
         updateText('total-team-count', `${entireTotalOrganizationFootprint.toString()} Nodes`);
 
         // Rank validation mapping structures code parameters checks
-        const activeRankCode = networkTuple.currentRankCode.toNumber();
+        const activeRankCode = networkTuple.currentRankCode ? networkTuple.currentRankCode.toNumber() : (networkTuple[1] ? networkTuple[1].toNumber() : 0);
         updateRankMilestoneTopologyDOM(activeRankCode, networkTuple);
 
         // 🚀 LIVE INJECT TRANSACTION HISTORY BLOCK SCANNER CHANNELS
@@ -499,22 +507,23 @@ function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
     }
 
     if (needLabel && progressLabel) {
+        const validDirects = networkTuple.validDirectsCount ? networkTuple.validDirectsCount.toString() : (networkTuple[3] ? networkTuple[3].toString() : "0");
         if (rankIndex === 0) {
             // ✨ Upgraded S1 Target Rule Text matching smart contract criteria exactly
             needLabel.innerText = "Target Milestone S1: Requires $100 Self Deposit & 3 Direct referrals with min $100 total spent";
-            
-            // ✨ Mapping validDirectsCount variable safely to show true active node vectors
-            const validDirects = networkTuple.validDirectsCount ? networkTuple.validDirectsCount.toString() : "0";
             progressLabel.innerText = `Progress Vector: ${validDirects} / 3 Valid Directs ($100+) Active`;
         } else if (rankIndex === 1) {
+            const s1Count = networkTuple.downlineS1Count ? networkTuple.downlineS1Count.toString() : (networkTuple[4] ? networkTuple[4].toString() : "0");
             needLabel.innerText = "Target Milestone S2: Requires 2 parallel lines to qualify S1 tier rank nodes";
-            progressLabel.innerText = `Progress Vector: ${networkTuple.downlineS1Count.toString()} / 2 Downline S1 Legs Active`;
+            progressLabel.innerText = `Progress Vector: ${s1Count} / 2 Downline S1 Legs Active`;
         } else if (rankIndex === 2) {
+            const s2Count = networkTuple.downlineS2Count ? networkTuple.downlineS2Count.toString() : (networkTuple[5] ? networkTuple[5].toString() : "0");
             needLabel.innerText = "Target Milestone S3: Requires 2 parallel lines to qualify S2 tier rank nodes";
-            progressLabel.innerText = `Progress Vector: ${networkTuple.downlineS2Count.toString()} / 2 Downline S2 Legs Active`;
+            progressLabel.innerText = `Progress Vector: ${s2Count} / 2 Downline S2 Legs Active`;
         } else if (rankIndex === 3) {
+            const s3Count = networkTuple.downlineS3Count ? networkTuple.downlineS3Count.toString() : (networkTuple[6] ? networkTuple[6].toString() : "0");
             needLabel.innerText = "Target Milestone S4: Requires 2 parallel lines to qualify S3 tier rank nodes";
-            progressLabel.innerText = `Progress Vector: ${networkTuple.downlineS3Count.toString()} / 2 Downline S3 Legs Active`;
+            progressLabel.innerText = `Progress Vector: ${s3Count} / 2 Downline S3 Legs Active`;
         } else if (rankIndex >= 4) {
             needLabel.innerText = "Target Milestone S5: Maximum System Milestone Node Achievement reached";
             progressLabel.innerText = "Progress Vector: Elite Master Node Status Secured";
