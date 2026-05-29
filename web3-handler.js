@@ -2,7 +2,7 @@
 
 let provider, signer, contract, usdtContract;
 
-const CONTRACT_ADDRESS = "0xa8bd8D378D5BcF0599228B07F539bC4d3218Fa3d"; // MetaAI Contract Address
+const CONTRACT_ADDRESS = "0x905098788cf8bb92e2e8739af4a7cae895f0f910 "; // MetaAI Contract Address
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE";     // BEP20 USDT Token Address
 const PUBLIC_RPC_URL = "https://bsc-testnet.publicnode.com";              // High-Performance BSC Testnet Public RPC Node
 
