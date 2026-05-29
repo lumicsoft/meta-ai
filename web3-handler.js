@@ -2,7 +2,8 @@
 
 let provider, signer, contract, usdtContract;
 
-const CONTRACT_ADDRESS = "0x15622C375f070735Bd968faE34fE1F9556c120d5 "; // MetaAI Contract Address
+// 🛠️ FIXED: Removed trailing space from address string to prevent parsing rejection
+const CONTRACT_ADDRESS = "0x15622C375f070735Bd968faE34fE1F9556c120d5"; // MetaAI Contract Address
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE";     // BEP20 USDT Token Address
 const PUBLIC_RPC_URL = "https://bsc-testnet.publicnode.com";              // High-Performance BSC Testnet Public RPC Node
 
@@ -18,18 +19,19 @@ const CONTRACT_ABI = [
     "function buyTokens(address _referrer, uint256 _usdtAmount) external",
     "function withdrawAvailableTokens() external",
     "function sellAvailableTokens() external",
-    "function transferOwnership(address _newOwner) external", // ✨ Added
+    "function transferOwnership(address _newOwner) external", 
     
     // --- View Lookups ---
     "function currentPhase() external view returns (uint256)",
     "function checkClaimableTokens(address _user) public view returns (uint256)",
     "function presalePhases(uint256) external view returns (uint256 price, uint256 maxSupply, uint256 sold, uint256 duration, uint256 startTime)",
-    "function userPhaseInvestment(address, uint256) external view returns (uint256)", // ✨ Added
+    "function userPhaseInvestment(address, uint256) external view returns (uint256)", 
     
     // --- Mapped Tuple Views ---
     "function getUserPurchaseDetails(address _userAddress) external view returns (uint256 totalUsdtInvested, uint256 totalMtaTokensBought, uint256 unreleasedVestedTokens, uint256 readyToReleaseVestedTokens, uint256 totalVestedTokensReleased)",
     "function getUserRewardDetails(address _userAddress) external view returns (uint256 totalDirectRewardsEarned, uint256 totalDifferentialRewardsEarned, uint256 pendingUnclaimedRewards, uint256 totalRewardsWithdrawnHistory)",
-    "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)",
+    // 🛠️ CRITICAL FIXED NODE: Added 'uint256 validDirectsCount' inside the array mapping to sync layout metrics seamlessly
+    "function getUserNetworkStats(address _userAddress) external view returns (address uplineReferrer, uint256 currentRankCode, uint256 immediateDirectCount, uint256 validDirectsCount, uint256 downlineS1Count, uint256 downlineS2Count, uint256 downlineS3Count, uint256 downlineS4Count)",
     "function getUserHistoryLogs(address _userAddress) external view returns (tuple(string logType, uint256 usdtAmount, uint256 tokenAmount, uint256 timestamp)[])",
     
     // --- Transaction History Events ABI Mappings ---
@@ -37,7 +39,7 @@ const CONTRACT_ABI = [
     "event DirectRewardDistributed(address indexed referrer, address indexed buyer, uint256 amount, uint256 timestamp)",
     "event DifferentialRewardDistributed(address indexed referrer, address indexed buyer, uint256 amount, uint256 rank, uint256 timestamp)",
     "event TokensWithdrawn(address indexed user, uint256 amount, uint256 timestamp)",
-    "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)" // ✨ Added
+    "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)" 
 ];
 
 const USDT_ABI = [
@@ -482,6 +484,7 @@ async function renderLiveEventHistoryLedger(userAddress) {
         historyRows.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-red-400">Failed to load system log array.</td></tr>`;
     }
 }
+
 // --- DYNAMIC STANDALONE RANK MILESTONE CALCULATOR DOM ENGINE ---
 function updateRankMilestoneTopologyDOM(rankIndex, networkTuple) {
     const statusLabel = document.getElementById('rank-badge-status');
