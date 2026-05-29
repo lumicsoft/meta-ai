@@ -79,7 +79,7 @@
                     </div>
                     <div class="bg-slate-950/60 p-2.5 rounded-xl border border-white/[0.03]">
                         <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">Gas Network</span>
-                        <span class="text-sm font-extrabold text-cyan-400 mt-0.5 block font-mono">BSC (97)</span>
+                        <span class="text-sm font-extrabold text-cyan-400 mt-0.5 block font-mono">BSC (56)</span>
                     </div>
                 </div>
             </div>
@@ -116,7 +116,7 @@
                 <div class="bg-slate-950/90 p-4 rounded-2xl border border-white/[0.04] premium-input transition-all space-y-1.5">
                     <div class="flex justify-between items-center text-[11px] font-medium text-slate-500">
                         <span>YOU PAY CAPITAL</span>
-                        <span class="font-mono text-slate-400" id="user-address">0x00...0000</span>
+                        <span class="font-mono text-slate-400" id="widget-wallet-address">0x00...0000</span>
                     </div>
                     <div class="flex items-center justify-between gap-4">
                         <input type="number" id="buy-usdt-amount" placeholder="100" min="100" class="bg-transparent text-xl sm:text-2xl font-bold text-white focus:outline-none w-2/3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" value="100" oninput="calculateTokensReceived(this.value)">
@@ -189,12 +189,32 @@
         const presaleRateMatrix = {
             1: 0.20,
             2: 0.50,
-            3: 5.00,
-            4: 10.00
+            3: 2.00,  // MAPPED WITH SOLIDITY CONTRACT PH-3 SPECIFICATIONS
+            4: 10.00, // MAPPED WITH SOLIDITY CONTRACT PH-4 SPECIFICATIONS
+            5: 50.00  // MAPPED WITH SOLIDITY CONTRACT PH-5 SPECIFICATIONS
         };
 
         // Baseline rate defaults safely to Phase 2 (0.50) on boot sequence
         let dynamicActiveRate = 0.50; 
+
+        // 🚀 DUAL-MODE STRATEGIC SPONSOR CROSS-PAGE REF BIND AUTOFILL LOGIC
+        function checkAndProcessReferralLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let sponsorAddress = urlParams.get('ref');
+            
+            // Check cross-repository storage if fallback state occurs on direct entry channels
+            if (!sponsorAddress || !ethers.utils.isAddress(sponsorAddress)) {
+                sponsorAddress = localStorage.getItem('cachedReferrer');
+            } else {
+                localStorage.setItem('cachedReferrer', sponsorAddress);
+            }
+
+            const inputField = document.getElementById('reg-referrer');
+            if (sponsorAddress && ethers.utils.isAddress(sponsorAddress) && inputField) {
+                inputField.value = sponsorAddress;
+                console.log("Sponsor Node injection sequence established successfully:", sponsorAddress);
+            }
+        }
 
         // 🔄 Super-Fast Local Memory Calculator (Runs instantly on user input)
         function calculateTokensReceived(usdtVal) {
@@ -224,7 +244,8 @@
                     // Trigger dynamic lookup to fetch contract current phase identifier
                     let activeContractInstance = window.contract;
                     if (!activeContractInstance && typeof CONTRACT_ADDRESS !== 'undefined') {
-                        const publicProvider = new ethers.providers.JsonRpcProvider("https://bsc-testnet.publicnode.com");
+                        const rpcTargetUrl = typeof PUBLIC_RPC_URL !== 'undefined' ? PUBLIC_RPC_URL : "https://bsc-dataseed.binance.org";
+                        const publicProvider = new ethers.providers.JsonRpcProvider(rpcTargetUrl);
                         activeContractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
                     }
                     
@@ -280,7 +301,7 @@
                 setTimeout(() => overlay.remove(), 300);
             }
 
-            const addrDisplay = document.getElementById('user-address');
+            const addrDisplay = document.getElementById('widget-wallet-address');
             if (addrDisplay && walletAddress) {
                 addrDisplay.innerText = walletAddress.substring(0,6) + "..." + walletAddress.substring(walletAddress.length - 4);
             }
@@ -297,6 +318,9 @@
 
         // --- GLOBAL INITIALIZATION HOOK SEQUENCES ---
         window.addEventListener('load', () => {
+            // Instantly sync matching tracking fields on loader instantiation lifecycle
+            checkAndProcessReferralLink();
+
             setTimeout(async () => {
                 await syncContractMetricsToUI();
             }, 600);
