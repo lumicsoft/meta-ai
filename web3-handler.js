@@ -17,8 +17,9 @@ window.userData = {
 const CONTRACT_ABI = [
     // --- Write Functions ---
     "function buyTokens(address _referrer, uint256 _usdtAmount) external",
-    "function withdrawAvailableTokens() external",
-    "function sellAvailableTokens() external",
+    // ABI mein ye replace karein:
+"function withdrawAvailableTokens(uint256 _amount) external",
+"function sellAvailableTokens(uint256 _amount) external",
     "function transferOwnership(address _newOwner) external", 
     
     // --- View Lookups ---
@@ -52,14 +53,32 @@ const USDT_ABI = [
 // --- REFERRAL LINK TERMINAL AUTO-FILL ---
 function checkReferralURL() {
     const urlParams = new URLSearchParams(window.location.search);
-    const refAddr = urlParams.get('ref');
-    const refField = document.getElementById('reg-referrer'); // Element on Register Section
+    let refAddr = urlParams.get('ref');
+    
+    // Storage mein save karo
+    if (refAddr && ethers.utils.isAddress(refAddr)) {
+        localStorage.setItem('cachedReferrer', refAddr);
+    }
 
-    if (refAddr && ethers.utils.isAddress(refAddr) && refField) {
-        refField.value = refAddr;
-        console.log("Referral string auto-loaded successfully:", refAddr);
+    // Local storage se uthao
+    const storedRef = localStorage.getItem('cachedReferrer');
+    const refField = document.getElementById('reg-referrer'); 
+
+    if (refField && storedRef) {
+        refField.value = storedRef;
+        refField.readOnly = true; 
+        console.log("Referral string auto-loaded successfully:", storedRef);
     }
 }
+
+// 🛠️ NEW: OBSERVER TO PREVENT OVERWRITES
+const referralObserver = new MutationObserver(() => {
+    const refField = document.getElementById('reg-referrer');
+    const storedRef = localStorage.getItem('cachedReferrer');
+    if (refField && storedRef && refField.value !== storedRef) {
+        refField.value = storedRef;
+    }
+});
 
 // --- INITIALIZATION TERMINAL PROTOCOL ---
 async function init() {
@@ -248,10 +267,17 @@ window.handleBuyToken = async function() {
 // --- MODULE 2: EXTRACT RELEASES FROM VAULT (WITHDRAW) ---
 window.handleWithdrawAvailable = async function() {
     try {
-        const tx = await contract.withdrawAvailableTokens();
+        // Frontend se amount uthayein (Assume: <input id="withdraw-amount">)
+        const amountStr = document.getElementById('withdraw-amount')?.value;
+        if (!amountStr || parseFloat(amountStr) <= 0) {
+            return alert("Valid withdrawal amount enter karein.");
+        }
+        const amountWei = ethers.utils.parseUnits(amountStr, 18);
+        
+        const tx = await contract.withdrawAvailableTokens(amountWei);
         alert("Withdraw execution sequence transmitted...");
         await tx.wait();
-        alert("Withdrawal successful! Tokens cleared into wallet ledger.");
+        alert("Withdrawal successful!");
         location.reload();
     } catch (err) { 
         console.error("Withdraw sequence reverted:", err);
@@ -259,12 +285,18 @@ window.handleWithdrawAvailable = async function() {
     }
 }
 
-// --- MODULE 3: INTERNAL CONTRACT SWAP & BURN DIRECT LIQUIDATOR ---
 window.handleSwapAndBurn = async function() {
     try {
-        if(!confirm("Are you sure you want to trigger immediate liquidation burn?")) return;
+        // Frontend se amount uthayein (Assume: <input id="sell-amount">)
+        const amountStr = document.getElementById('sell-amount')?.value;
+        if (!amountStr || parseFloat(amountStr) <= 0) {
+            return alert("Valid liquidation amount enter karein.");
+        }
+        const amountWei = ethers.utils.parseUnits(amountStr, 18);
+
+        if(!confirm("Are you sure you want to trigger liquidation burn for " + amountStr + " MTA?")) return;
         
-        const tx = await contract.sellAvailableTokens();
+        const tx = await contract.sellAvailableTokens(amountWei);
         alert("Liquidation token burn signal broadcasted...");
         await tx.wait();
         alert("Liquidation successful! Safe USDT capital routed back to wallet address.");
@@ -325,12 +357,12 @@ async function setupApp(address) {
 
         // --- 🔒 STRICT NETWORK VERIFICATION SHIELD (BSC TESTNET ONLY) ---
         const network = await provider.getNetwork();
-        if (network.chainId !== 97) { 
+        if (network.chainId !== 56) { 
             try {
                 // Automatic switch network request call
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x61' }], // Hex decimal code for BSC Testnet Chain 97
+                    params: [{ chainId: '0x38' }], // Hex decimal code for BSC Testnet Chain 97
                 });
                 
                 alert("Network switched successfully! Syncing nodes...");
@@ -338,7 +370,7 @@ async function setupApp(address) {
                 return;
             } catch (err) {
                 console.error("Network switch rejection or error:", err);
-                alert("Network Conflict: Processing requires switching to the BSC Testnet. Please change network inside your wallet app.");
+                alert("Network Conflict: Processing requires switching to the BSC mainnet. Please change network inside your wallet app.");
                 return; // Execution stops immediately if network shift is declined
             }
         }
@@ -533,21 +565,23 @@ function updateRankMilestoneTopologyDOM(rankIndex, networkTuple, trueValidDirect
 }
 
 // --- GLOBAL ATOMIC DOM UTILITIES (FIXED FOR GITHUB PAGES 404 & AUTOFILL) ---
+// --- GLOBAL ATOMIC DOM UTILITIES (FIXED FOR CORRECT URL STRUCTURE) ---
 function renderWalletCredentialsString(walletAddress) {
     const addressBox = document.getElementById("user-address");
     if (addressBox) addressBox.innerText = `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`;
     
     const referralInputLinkElement = document.getElementById("refURL");
     if (referralInputLinkElement) {
-        // Fix: window.location.origin ke badle href ka split structure use kiya h taaki sub-repositories automatic catch ho jayein
-        const currentCleanUrl = window.location.href.split('?')[0]; 
+        // Base URL nikalne ke liye
+        const currentUrl = window.location.href.split('?')[0]; 
         
-        // Fallback checks to ensure link targets core buy module context page
-        let targetBuyPageUrl = currentCleanUrl;
-        if (currentCleanUrl.includes('index1.html')) {
-            targetBuyPageUrl = currentCleanUrl.replace('index1.html', 'index.html');
-        } else if (currentCleanUrl.includes('web.html')) {
-            targetBuyPageUrl = currentCleanUrl.replace('web.html', 'index.html');
+        // Agar URL mein index1 hai, toh usse hata kar index replace karein
+        // Yeh logic index1.php ya index1.html dono par kaam karega
+        let targetBuyPageUrl = currentUrl.replace('index1.', 'index.');
+        
+        // Agar kisi wajah se 'index1' replace na hua ho toh default check
+        if (targetBuyPageUrl.includes('index1')) {
+             targetBuyPageUrl = targetBuyPageUrl.replace('index1', 'index');
         }
         
         referralInputLinkElement.value = `${targetBuyPageUrl}?ref=${walletAddress}`;
@@ -576,6 +610,16 @@ window.handleLogout = function() {
         window.location.href = "index.html";
     }
 }
+
+// --- 🚀 FINAL AUTOFILL & OBSERVER INTEGRATION ---
+window.addEventListener('load', () => {
+    // Initial check
+    checkReferralURL();
+    
+    // MutationObserver to keep referral alive
+    const targetNode = document.body;
+    referralObserver.observe(targetNode, { childList: true, subtree: true });
+});
 
 if (window.ethereum) {
     window.ethereum.on('accountsChanged', () => { location.reload(); });
