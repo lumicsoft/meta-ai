@@ -357,12 +357,12 @@ async function setupApp(address) {
 
         // --- 🔒 STRICT NETWORK VERIFICATION SHIELD (BSC TESTNET ONLY) ---
         const network = await provider.getNetwork();
-        if (network.chainId !== 56) { 
+        if (network.chainId !== 97) { 
             try {
                 // Automatic switch network request call
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x38' }], // Hex decimal code for BSC Testnet Chain 97
+                    params: [{ chainId: '0x61' }], // Hex decimal code for BSC Testnet Chain 97
                 });
                 
                 alert("Network switched successfully! Syncing nodes...");
