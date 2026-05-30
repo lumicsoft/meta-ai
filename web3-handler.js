@@ -3,7 +3,7 @@
 let provider, signer, contract, usdtContract;
 
 // 🛠️ FIXED: Removed trailing space from address string to prevent parsing rejection
-const CONTRACT_ADDRESS = "0x15622C375f070735Bd968faE34fE1F9556c120d5"; // MetaAI Contract Address
+const CONTRACT_ADDRESS = "0x53E379E8364a6B72368C6040D72ad658cFc286dC"; // MetaAI Contract Address
 const USDT_ADDRESS = "0x3B66b1E08F55AF26c8eA14a73dA64b6bC8D799dE";     // BEP20 USDT Token Address
 const PUBLIC_RPC_URL = "https://bsc-testnet.publicnode.com";              // High-Performance BSC Testnet Public RPC Node
 
